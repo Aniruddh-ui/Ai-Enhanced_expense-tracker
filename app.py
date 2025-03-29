@@ -1,22 +1,22 @@
 import os
 import mysql.connector
-from flask import Flask, request, jsonify
+from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
 
 # Database connection using FreeSQLDatabase.com credentials
 db = mysql.connector.connect(
-    host="sql12.freesqldatabase.com",  # Replace with your DB host
-    user="sql12770307",  # Replace with your DB username
-    password="kz9jXxJP75",  # Replace with your DB password
-    database="sql12770307"  # Replace with your DB name
+    host=os.getenv("DB_HOST", "sql12.freesqldatabase.com"),  # Default value for local testing
+    user=os.getenv("DB_USER", "sql12770307"),
+    password=os.getenv("DB_PASSWORD", "kz9jXxJP75"),
+    database=os.getenv("DB_NAME", "sql12770307")
 )
 cursor = db.cursor()
 
-# Homepage Route
+# Serve index.html
 @app.route("/")
 def home():
-    return "Welcome to the Expense Tracker API! Use /add_expense to add an expense or /get_expenses/<user_id> to retrieve expenses."
+    return render_template("index.html")
 
 # API to add expenses
 @app.route('/add_expense', methods=['POST'])
@@ -41,7 +41,8 @@ def get_expenses(user_id):
     return jsonify({"expenses": expenses})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000)  # Port 10000 for Render
+    app.run(host='0.0.0.0', port=10000, debug=True)  # Debug mode enabled for local testing
+
 
 
 
