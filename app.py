@@ -1,14 +1,15 @@
-from flask import Flask, request, jsonify
+import os
 import mysql.connector
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-# Connect to MySQL Database
+# Database connection using FreeSQLDatabase.com credentials
 db = mysql.connector.connect(
-    host="localhost",
-    user="root",
-    password="annu@2005",
-    database="FinanceTracker"
+    host="sql12.freesqldatabase.com",  # Replace with your DB host
+    user="sql12770307",  # Replace with your DB username
+    password="kz9jXxJP75",  # Replace with your DB password
+    database="sql12770307"  # Replace with your DB name
 )
 cursor = db.cursor()
 
@@ -21,20 +22,26 @@ def home():
 @app.route('/add_expense', methods=['POST'])
 def add_expense():
     data = request.json
-    cursor.execute(f"""
+    query = """
         INSERT INTO Expenses (user_id, category, amount, description, expense_date)
-        VALUES ({data['user_id']}, '{data['category']}', {data['amount']}, '{data['description']}', '{data['expense_date']}')
-    """)
+        VALUES (%s, %s, %s, %s, %s)
+    """
+    values = (data['user_id'], data['category'], data['amount'], data['description'], data['expense_date'])
+    
+    cursor.execute(query, values)
     db.commit()
+    
     return jsonify({"message": "Expense added successfully!"})
 
 # API to get expenses
 @app.route('/get_expenses/<int:user_id>', methods=['GET'])
 def get_expenses(user_id):
-    cursor.execute(f"SELECT * FROM Expenses WHERE user_id = {user_id}")
+    cursor.execute("SELECT * FROM Expenses WHERE user_id = %s", (user_id,))
     expenses = cursor.fetchall()
     return jsonify({"expenses": expenses})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=10000)  # Port 10000 for Render
+
+
 
