@@ -50,19 +50,25 @@ def add_expense():
         cursor.close()
         db.close()
 
-# API to get expenses
+# API to get expenses along with total expense
 @app.route('/get_expenses/<int:user_id>', methods=['GET'])
 def get_expenses(user_id):
     db = create_db_connection()
     if not db:
         return jsonify({"error": "Database connection failed"}), 500
 
-    cursor = db.cursor()
+    cursor = db.cursor(dictionary=True)
 
     try:
-        cursor.execute("SELECT * FROM expenses WHERE user_id = %s", (user_id,))
+        # Fetch user expenses
+        cursor.execute("SELECT category, amount, description, expense_date FROM expenses WHERE user_id = %s", (user_id,))
         expenses = cursor.fetchall()
-        return jsonify({"expenses": expenses})
+
+        # Calculate total expenses
+        cursor.execute("SELECT SUM(amount) AS total_expense FROM expenses WHERE user_id = %s", (user_id,))
+        total_expense = cursor.fetchone()["total_expense"] or 0  # Default to 0 if no expenses
+
+        return jsonify({"expenses": expenses, "total_expense": total_expense})
 
     except mysql.connector.Error as err:
         print(f"Error fetching expenses: {err}")
@@ -74,6 +80,7 @@ def get_expenses(user_id):
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000, debug=True)
+
 
 
 

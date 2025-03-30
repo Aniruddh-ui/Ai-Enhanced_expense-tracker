@@ -7,7 +7,6 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600&family=Roboto:wght@400&display=swap');
 
-        /* General Styles */
         body {
             font-family: 'Roboto', sans-serif;
             background-color: #ffffff;
@@ -20,53 +19,40 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            overflow: hidden;
+            position: relative;
         }
 
-        /* Scrolling Background Text */
-        .background-text {
-            position: fixed;
-            top: 50%;
-            left: 0;
-            width: 100%;
-            font-size: 3rem;
-            font-family: 'Poppins', sans-serif;
-            font-weight: bold;
-            text-transform: uppercase;
-            color: rgba(0, 0, 0, 0.03);
-            white-space: nowrap;
-            animation: scrollText 10s linear infinite;
-            pointer-events: none;
+        /* Floating Currency Symbols */
+        .currency-symbol {
+            position: absolute;
+            font-size: 2rem;
+            opacity: 0.5;
+            color: rgba(0, 0, 0, 0.1);
+            animation: floatCurrency 5s linear infinite;
         }
 
-        @keyframes scrollText {
-            from { transform: translateX(100%); }
-            to { transform: translateX(-100%); }
+        @keyframes floatCurrency {
+            from { transform: translateY(100vh) scale(1); opacity: 0.7; }
+            to { transform: translateY(-10vh) scale(1.5); opacity: 0; }
         }
 
-        /* Container */
         .container {
             max-width: 400px;
             background: #f5f5f5;
             padding: 25px;
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 1;
         }
 
         h1 {
             font-family: 'Poppins', sans-serif;
             font-size: 2.2rem;
             font-weight: 600;
-            color: #333;
-            margin-bottom: 20px;
         }
 
-        h3 {
-            font-size: 1.2rem;
-            color: #555;
-            margin-bottom: 15px;
-        }
-
-        /* Input Fields */
         input {
             width: calc(100% - 20px);
             padding: 12px;
@@ -74,23 +60,11 @@
             border: 1px solid #ccc;
             border-radius: 8px;
             font-size: 16px;
-            background: #ffffff;
-            color: #333;
-            outline: none;
             display: block;
+            outline: none;
             transition: 0.3s;
         }
 
-        input:focus {
-            border-color: #007bff;
-            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-        }
-
-        input[type="date"] {
-            text-transform: uppercase;
-        }
-
-        /* Buttons */
         button {
             width: 100%;
             padding: 14px;
@@ -98,36 +72,28 @@
             color: white;
             border: none;
             border-radius: 8px;
-            cursor: pointer;
             font-size: 16px;
             font-weight: bold;
             transition: 0.3s;
             margin-top: 10px;
+            cursor: pointer;
         }
 
-        button:hover {
-            background: #0056b3;
-        }
-
-        /* Expense List */
         .expense-list {
             margin-top: 20px;
             text-align: left;
         }
 
-        .expense-item {
-            background: #ffffff;
-            padding: 10px;
-            margin: 5px 0;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        .total-expense {
+            margin-top: 10px;
+            font-size: 1.2rem;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
-    <div class="background-text">Track Your Expenses • Track Your Expenses •</div>
-    <h1>Expense Tracker</h1>
     <div class="container">
+        <h1>Expense Tracker</h1>
         <h3>Add Expense</h3>
         <input type="number" id="user_id" placeholder="User ID">
         <input type="text" id="category" placeholder="Category">
@@ -140,10 +106,10 @@
         <input type="number" id="fetch_user_id" placeholder="Enter User ID">
         <button onclick="getExpenses()">Get Expenses</button>
         <div class="expense-list" id="expenseList"></div>
+        <div class="total-expense" id="totalExpense"></div>
     </div>
 
     <script>
-        // Function to Add Expense
         function addExpense() {
             let userId = document.getElementById("user_id").value;
             let category = document.getElementById("category").value;
@@ -156,64 +122,67 @@
                 return;
             }
 
-            let expenseData = {
-                category,
-                amount,
-                description,
-                expenseDate
-            };
-
-            // Get existing data from localStorage
+            let expenseData = { category, amount: parseFloat(amount), description, expenseDate };
             let expenses = JSON.parse(localStorage.getItem(`expenses_${userId}`)) || [];
             expenses.push(expenseData);
             localStorage.setItem(`expenses_${userId}`, JSON.stringify(expenses));
 
             alert("Expense Added Successfully!");
-            
-            // Clear input fields
-            document.getElementById("user_id").value = "";
-            document.getElementById("category").value = "";
-            document.getElementById("amount").value = "";
-            document.getElementById("description").value = "";
-            document.getElementById("expense_date").value = "";
+            document.querySelectorAll("input").forEach(input => input.value = "");
         }
 
-        // Function to Get Expenses
         function getExpenses() {
             let fetchUserId = document.getElementById("fetch_user_id").value;
             let expenseList = document.getElementById("expenseList");
+            let totalExpenseDisplay = document.getElementById("totalExpense");
 
             if (!fetchUserId) {
                 alert("Please enter a User ID!");
                 return;
             }
 
-            // Retrieve expenses from localStorage
             let expenses = JSON.parse(localStorage.getItem(`expenses_${fetchUserId}`)) || [];
 
             if (expenses.length === 0) {
                 expenseList.innerHTML = "<p>No expenses found for this user.</p>";
+                totalExpenseDisplay.innerHTML = "";
                 return;
             }
 
-            // Display expenses
+            let totalExpense = expenses.reduce((sum, expense) => sum + expense.amount, 0);
             expenseList.innerHTML = "";
-            expenses.forEach((expense, index) => {
+            expenses.forEach(expense => {
                 let expenseItem = document.createElement("div");
                 expenseItem.className = "expense-item";
                 expenseItem.innerHTML = `
                     <p><strong>Category:</strong> ${expense.category}</p>
-                    <p><strong>Amount:</strong> $${expense.amount}</p>
+                    <p><strong>Amount:</strong> $${expense.amount.toFixed(2)}</p>
                     <p><strong>Description:</strong> ${expense.description}</p>
                     <p><strong>Date:</strong> ${expense.expenseDate}</p>
                     <hr>
                 `;
                 expenseList.appendChild(expenseItem);
             });
+
+            totalExpenseDisplay.innerHTML = `<p>Total Expenses: <strong>$${totalExpense.toFixed(2)}</strong></p>`;
         }
+
+        function createFloatingSymbols() {
+            const symbols = ["$", "₹", "€", "¥"];
+            for (let i = 0; i < 15; i++) {
+                let symbol = document.createElement("div");
+                symbol.className = "currency-symbol";
+                symbol.innerHTML = symbols[Math.floor(Math.random() * symbols.length)];
+                symbol.style.left = `${Math.random() * 100}vw`;
+                symbol.style.animationDuration = `${Math.random() * 3 + 3}s`;
+                document.body.appendChild(symbol);
+            }
+        }
+        createFloatingSymbols();
     </script>
 </body>
 </html>
+
 
 
 
