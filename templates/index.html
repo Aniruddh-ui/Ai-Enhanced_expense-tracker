@@ -15,21 +15,20 @@
             margin: 0;
             padding: 0;
             min-height: 100vh;
+            overflow-y: auto;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            overflow: hidden;
+            justify-content: flex-start;
             position: relative;
         }
 
-        /* Floating Currency Symbols */
         .currency-symbol {
             position: absolute;
             font-size: 2rem;
             opacity: 0.5;
             color: rgba(0, 0, 0, 0.1);
-            animation: floatCurrency 5s linear infinite;
+            animation: floatCurrency 7s linear infinite;
         }
 
         @keyframes floatCurrency {
@@ -43,7 +42,7 @@
             padding: 25px;
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            position: relative;
+            margin: 20px 0;
             z-index: 1;
         }
 
@@ -53,7 +52,7 @@
             font-weight: 600;
         }
 
-        input {
+        input, button {
             width: calc(100% - 20px);
             padding: 12px;
             margin: 10px 0;
@@ -66,28 +65,16 @@
         }
 
         button {
-            width: 100%;
-            padding: 14px;
             background: #007bff;
             color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
             font-weight: bold;
-            transition: 0.3s;
-            margin-top: 10px;
+            border: none;
             cursor: pointer;
         }
 
-        .expense-list {
+        .expense-list, .total-expense {
             margin-top: 20px;
             text-align: left;
-        }
-
-        .total-expense {
-            margin-top: 10px;
-            font-size: 1.2rem;
-            font-weight: bold;
         }
     </style>
 </head>
@@ -174,7 +161,7 @@
                 symbol.className = "currency-symbol";
                 symbol.innerHTML = symbols[Math.floor(Math.random() * symbols.length)];
                 symbol.style.left = `${Math.random() * 100}vw`;
-                symbol.style.animationDuration = `${Math.random() * 3 + 3}s`;
+                symbol.style.animationDuration = `${Math.random() * 4 + 3}s`;
                 document.body.appendChild(symbol);
             }
         }
@@ -182,10 +169,3 @@
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
