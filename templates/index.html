@@ -5,107 +5,122 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Expense Tracker</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600&family=Roboto:wght@400&display=swap');
 
+        /* General Styles */
         body {
-            font-family: 'Arial', sans-serif;
-            background-color: #1e1e1e;
-            color: white;
+            font-family: 'Roboto', sans-serif;
+            background-color: #ffffff;
+            color: #333;
             text-align: center;
             margin: 0;
             padding: 0;
-            position: relative;
-            overflow-y: auto;  /* Enables scrolling */
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
 
-        /* Scrolling background text */
+        /* Scrolling Background Text */
         .background-text {
             position: fixed;
             top: 50%;
             left: 0;
             width: 100%;
-            font-size: 5rem;
+            font-size: 3rem;
+            font-family: 'Poppins', sans-serif;
             font-weight: bold;
             text-transform: uppercase;
-            color: rgba(255, 255, 255, 0.05);
+            color: rgba(0, 0, 0, 0.03);
             white-space: nowrap;
             animation: scrollText 10s linear infinite;
-            pointer-events: none; /* Prevents interfering with clicks */
+            pointer-events: none;
         }
 
         @keyframes scrollText {
-            from {
-                transform: translateX(100%);
-            }
-            to {
-                transform: translateX(-100%);
-            }
+            from { transform: translateX(100%); }
+            to { transform: translateX(-100%); }
         }
 
+        /* Container */
         .container {
             max-width: 400px;
-            background: #2c2c2c;
-            margin: auto;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(255, 255, 255, 0.2);
-            position: relative; /* Fixes input clicking issue */
+            background: #f5f5f5;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
         h1 {
             font-family: 'Poppins', sans-serif;
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: white;
+            font-size: 2.2rem;
+            font-weight: 600;
+            color: #333;
             margin-bottom: 20px;
         }
 
+        h3 {
+            font-size: 1.2rem;
+            color: #555;
+            margin-bottom: 15px;
+        }
+
+        /* Input Fields */
         input {
             width: calc(100% - 20px);
-            padding: 10px;
+            padding: 12px;
             margin: 10px 0;
-            border: none;
-            border-radius: 5px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
             font-size: 16px;
-            background: #3b3b3b;
-            color: white;
+            background: #ffffff;
+            color: #333;
             outline: none;
             display: block;
-        }
-
-        input[type="date"] {
-            background: #3b3b3b;
-            color: white;
-            text-transform: uppercase;
-        }
-
-        button {
-            width: 100%;
-            padding: 12px;
-            background: #ff5733;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
             transition: 0.3s;
         }
 
-        button:hover {
-            background: #c70039;
+        input:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
         }
 
+        input[type="date"] {
+            text-transform: uppercase;
+        }
+
+        /* Buttons */
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        /* Expense List */
         .expense-list {
             margin-top: 20px;
             text-align: left;
         }
 
         .expense-item {
-            background: #444;
+            background: #ffffff;
             padding: 10px;
             margin: 5px 0;
-            border-radius: 5px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
@@ -126,8 +141,80 @@
         <button onclick="getExpenses()">Get Expenses</button>
         <div class="expense-list" id="expenseList"></div>
     </div>
+
+    <script>
+        // Function to Add Expense
+        function addExpense() {
+            let userId = document.getElementById("user_id").value;
+            let category = document.getElementById("category").value;
+            let amount = document.getElementById("amount").value;
+            let description = document.getElementById("description").value;
+            let expenseDate = document.getElementById("expense_date").value;
+
+            if (!userId || !category || !amount || !description || !expenseDate) {
+                alert("Please fill all fields!");
+                return;
+            }
+
+            let expenseData = {
+                category,
+                amount,
+                description,
+                expenseDate
+            };
+
+            // Get existing data from localStorage
+            let expenses = JSON.parse(localStorage.getItem(`expenses_${userId}`)) || [];
+            expenses.push(expenseData);
+            localStorage.setItem(`expenses_${userId}`, JSON.stringify(expenses));
+
+            alert("Expense Added Successfully!");
+            
+            // Clear input fields
+            document.getElementById("user_id").value = "";
+            document.getElementById("category").value = "";
+            document.getElementById("amount").value = "";
+            document.getElementById("description").value = "";
+            document.getElementById("expense_date").value = "";
+        }
+
+        // Function to Get Expenses
+        function getExpenses() {
+            let fetchUserId = document.getElementById("fetch_user_id").value;
+            let expenseList = document.getElementById("expenseList");
+
+            if (!fetchUserId) {
+                alert("Please enter a User ID!");
+                return;
+            }
+
+            // Retrieve expenses from localStorage
+            let expenses = JSON.parse(localStorage.getItem(`expenses_${fetchUserId}`)) || [];
+
+            if (expenses.length === 0) {
+                expenseList.innerHTML = "<p>No expenses found for this user.</p>";
+                return;
+            }
+
+            // Display expenses
+            expenseList.innerHTML = "";
+            expenses.forEach((expense, index) => {
+                let expenseItem = document.createElement("div");
+                expenseItem.className = "expense-item";
+                expenseItem.innerHTML = `
+                    <p><strong>Category:</strong> ${expense.category}</p>
+                    <p><strong>Amount:</strong> $${expense.amount}</p>
+                    <p><strong>Description:</strong> ${expense.description}</p>
+                    <p><strong>Date:</strong> ${expense.expenseDate}</p>
+                    <hr>
+                `;
+                expenseList.appendChild(expenseItem);
+            });
+        }
+    </script>
 </body>
 </html>
+
 
 
 
