@@ -21,12 +21,27 @@
             flex-direction: column;
             align-items: center;
             justify-content: flex-start;
+            overflow: hidden;
+            position: relative;
         }
 
         @keyframes gradientBG {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
+        }
+
+        .floating-symbol {
+            position: absolute;
+            font-size: 2.5rem;
+            opacity: 0.5;
+            color: rgba(0, 0, 0, 0.7);
+            animation: floatCurrency 6s linear infinite;
+        }
+
+        @keyframes floatCurrency {
+            from { transform: translateY(100vh) scale(1); opacity: 0.7; }
+            to { transform: translateY(-10vh) scale(1.5); opacity: 0; }
         }
 
         .container {
@@ -36,6 +51,7 @@
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
             margin: 20px 0;
+            z-index: 1;
         }
 
         h1 { font-family: 'Poppins', sans-serif; }
@@ -138,7 +154,19 @@
 
             totalExpenseDisplay.innerHTML = `<p>Total Expenses: <strong>$${totalExpense.toFixed(2)}</strong></p>`;
         }
+
+        function createFloatingSymbols() {
+            const symbols = ["$", "₹", "€", "¥"];
+            for (let i = 0; i < 20; i++) {
+                let symbol = document.createElement("div");
+                symbol.className = "floating-symbol";
+                symbol.innerHTML = symbols[Math.floor(Math.random() * symbols.length)];
+                symbol.style.left = `${Math.random() * 100}vw`;
+                symbol.style.animationDuration = `${Math.random() * 5 + 4}s`;
+                document.body.appendChild(symbol);
+            }
+        }
+        createFloatingSymbols();
     </script>
 </body>
 </html>
-
