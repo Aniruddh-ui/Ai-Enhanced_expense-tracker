@@ -7,9 +7,10 @@
     <style>
         body {
             font-family: 'Arial', sans-serif;
-            background-color: #f4f4f4;
+            background: linear-gradient(to right, #6a11cb, #2575fc);
             text-align: center;
             margin: 40px;
+            color: white;
         }
         
         .container {
@@ -18,11 +19,12 @@
             margin: auto;
             padding: 20px;
             border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            color: black;
         }
 
         h1 {
-            color: #333;
+            color: white;
         }
 
         input {
@@ -34,10 +36,19 @@
             font-size: 16px;
         }
 
+        input[type="date"] {
+            appearance: none;
+            background: #f9f9f9;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
         button {
             width: 100%;
             padding: 12px;
-            background: #007bff;
+            background: #ff5733;
             color: white;
             border: none;
             border-radius: 5px;
@@ -47,7 +58,7 @@
         }
 
         button:hover {
-            background: #0056b3;
+            background: #c70039;
         }
 
         .expense-list {
@@ -81,7 +92,7 @@
     </div>
     
     <script>
-        const API_URL = "https://expense-tracker-vzs0.onrender.com"; // Your backend API URL
+        const API_URL = "https://expense-tracker-vzs0.onrender.com";
 
         async function addExpense() {
             const data = {
@@ -107,7 +118,6 @@
                     console.error("Invalid JSON response:", text);
                     alert("Server error: Response is not JSON.");
                 }
-
             } catch (error) {
                 console.error("Error:", error);
                 alert("Failed to add expense. Check the console for details.");
@@ -126,7 +136,7 @@
                     const list = document.getElementById('expenseList');
                     list.innerHTML = '';
                     result.expenses.forEach(expense => {
-                        list.innerHTML += `<div class="expense-item">${expense[1]} - ₹${expense[2]} (${expense[4]})</div>`;
+                        list.innerHTML += `<div class="expense-item">${expense[2]} - ₹${expense[3]} (${expense[4]})</div>`;
                     });
                 } catch (err) {
                     console.error("Invalid JSON response:", text);
@@ -140,5 +150,6 @@
     </script>
 </body>
 </html>
+
 
 
