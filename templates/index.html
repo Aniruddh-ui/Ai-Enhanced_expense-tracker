@@ -6,25 +6,60 @@
     <title>Expense Tracker</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
             text-align: center;
             margin: 40px;
         }
+        
         .container {
             max-width: 400px;
+            background: white;
             margin: auto;
             padding: 20px;
-            border: 1px solid #ddd;
             border-radius: 10px;
-            box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
-        input, button {
-            width: 100%;
+
+        h1 {
+            color: #333;
+        }
+
+        input {
+            width: calc(100% - 20px);
             padding: 10px;
             margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
         }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
         .expense-list {
             margin-top: 20px;
+            text-align: left;
+        }
+
+        .expense-item {
+            background: #e9f5ff;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
         }
     </style>
 </head>
@@ -46,6 +81,8 @@
     </div>
     
     <script>
+        const API_URL = "https://expense-tracker-vzs0.onrender.com"; // Your backend API URL
+
         async function addExpense() {
             const data = {
                 user_id: document.getElementById('user_id').value,
@@ -54,28 +91,54 @@
                 description: document.getElementById('description').value,
                 expense_date: document.getElementById('expense_date').value,
             };
-            
-            const response = await fetch('/add_expense', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
-            });
-            const result = await response.json();
-            alert(result.message);
+
+            try {
+                const response = await fetch(`${API_URL}/add_expense`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data),
+                });
+
+                const text = await response.text();
+                try {
+                    const result = JSON.parse(text);
+                    alert(result.message);
+                } catch (err) {
+                    console.error("Invalid JSON response:", text);
+                    alert("Server error: Response is not JSON.");
+                }
+
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Failed to add expense. Check the console for details.");
+            }
         }
 
         async function getExpenses() {
             const user_id = document.getElementById('fetch_user_id').value;
-            const response = await fetch(`/get_expenses/${user_id}`);
-            const result = await response.json();
-            
-            const list = document.getElementById('expenseList');
-            list.innerHTML = '';
-            result.expenses.forEach(expense => {
-                list.innerHTML += `<p>${expense[1]} - ₹${expense[2]} (${expense[4]})</p>`;
-            });
+            try {
+                const response = await fetch(`${API_URL}/get_expenses/${user_id}`);
+                
+                const text = await response.text();
+                try {
+                    const result = JSON.parse(text);
+
+                    const list = document.getElementById('expenseList');
+                    list.innerHTML = '';
+                    result.expenses.forEach(expense => {
+                        list.innerHTML += `<div class="expense-item">${expense[1]} - ₹${expense[2]} (${expense[4]})</div>`;
+                    });
+                } catch (err) {
+                    console.error("Invalid JSON response:", text);
+                    alert("Server error: Response is not JSON.");
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Failed to fetch expenses.");
+            }
         }
     </script>
 </body>
 </html>
+
 
