@@ -5,14 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Expense Tracker</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@700&display=swap');
+
         body {
             font-family: 'Arial', sans-serif;
             background-color: #1e1e1e;
             color: white;
             text-align: center;
-            margin: 40px;
+            margin: 0;
+            padding: 0;
             position: relative;
-            overflow: hidden;
+            overflow-y: auto;  /* Enables scrolling */
+            min-height: 100vh;
         }
 
         /* Scrolling background text */
@@ -27,6 +31,7 @@
             color: rgba(255, 255, 255, 0.05);
             white-space: nowrap;
             animation: scrollText 10s linear infinite;
+            pointer-events: none; /* Prevents interfering with clicks */
         }
 
         @keyframes scrollText {
@@ -45,10 +50,15 @@
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(255, 255, 255, 0.2);
+            position: relative; /* Fixes input clicking issue */
         }
 
         h1 {
-            color: #ffcc00;
+            font-family: 'Poppins', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 20px;
         }
 
         input {
@@ -61,6 +71,7 @@
             background: #3b3b3b;
             color: white;
             outline: none;
+            display: block;
         }
 
         input[type="date"] {
@@ -117,6 +128,7 @@
     </div>
 </body>
 </html>
+
 
 
 
