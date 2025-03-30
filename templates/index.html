@@ -9,9 +9,9 @@
 
         body {
             font-family: 'Roboto', sans-serif;
-            background: linear-gradient(45deg, #ff9a9e, #fad0c4, #fad0c4, #ffdde1);
-            background-size: 300% 300%;
-            animation: gradientBG 10s ease infinite;
+            background: linear-gradient(45deg, #ff9a9e, #fad0c4, #ffdde1, #ffdde1);
+            background-size: 400% 400%;
+            animation: gradientBG 8s ease infinite;
             color: #333;
             text-align: center;
             margin: 0;
@@ -34,8 +34,8 @@
         .currency-symbol {
             position: absolute;
             font-size: 2.5rem;
-            opacity: 0.8;
-            color: rgba(0, 0, 0, 0.2);
+            opacity: 0.9;
+            color: rgba(255, 215, 0, 0.8);
             animation: floatCurrency 6s linear infinite;
         }
 
@@ -46,18 +46,18 @@
 
         .container {
             max-width: 400px;
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.95);
             padding: 25px;
             border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
             margin: 20px 0;
             z-index: 1;
         }
 
         h1 {
             font-family: 'Poppins', sans-serif;
-            font-size: 2.2rem;
-            font-weight: 600;
+            font-size: 2.5rem;
+            font-weight: 700;
         }
 
         input, button {
@@ -105,6 +105,62 @@
     </div>
 
     <script>
+        function addExpense() {
+            let userId = document.getElementById("user_id").value;
+            let category = document.getElementById("category").value;
+            let amount = document.getElementById("amount").value;
+            let description = document.getElementById("description").value;
+            let expenseDate = document.getElementById("expense_date").value;
+
+            if (!userId || !category || !amount || !description || !expenseDate) {
+                alert("Please fill all fields!");
+                return;
+            }
+
+            let expenseData = { category, amount: parseFloat(amount), description, expenseDate };
+            let expenses = JSON.parse(localStorage.getItem(`expenses_${userId}`)) || [];
+            expenses.push(expenseData);
+            localStorage.setItem(`expenses_${userId}`, JSON.stringify(expenses));
+
+            alert("Expense Added Successfully!");
+            document.querySelectorAll("input").forEach(input => input.value = "");
+        }
+
+        function getExpenses() {
+            let fetchUserId = document.getElementById("fetch_user_id").value;
+            let expenseList = document.getElementById("expenseList");
+            let totalExpenseDisplay = document.getElementById("totalExpense");
+
+            if (!fetchUserId) {
+                alert("Please enter a User ID!");
+                return;
+            }
+
+            let expenses = JSON.parse(localStorage.getItem(`expenses_${fetchUserId}`)) || [];
+
+            if (expenses.length === 0) {
+                expenseList.innerHTML = "<p>No expenses found for this user.</p>";
+                totalExpenseDisplay.innerHTML = "";
+                return;
+            }
+
+            let totalExpense = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+            expenseList.innerHTML = "";
+            expenses.forEach(expense => {
+                let expenseItem = document.createElement("div");
+                expenseItem.innerHTML = `
+                    <p><strong>Category:</strong> ${expense.category}</p>
+                    <p><strong>Amount:</strong> $${expense.amount.toFixed(2)}</p>
+                    <p><strong>Description:</strong> ${expense.description}</p>
+                    <p><strong>Date:</strong> ${expense.expenseDate}</p>
+                    <hr>
+                `;
+                expenseList.appendChild(expenseItem);
+            });
+
+            totalExpenseDisplay.innerHTML = `<p>Total Expenses: <strong>$${totalExpense.toFixed(2)}</strong></p>`;
+        }
+
         function createFloatingSymbols() {
             const symbols = ["$", "₹", "€", "¥"];
             for (let i = 0; i < 20; i++) {
@@ -113,7 +169,7 @@
                 symbol.innerHTML = symbols[Math.floor(Math.random() * symbols.length)];
                 symbol.style.left = `${Math.random() * 100}vw`;
                 symbol.style.animationDuration = `${Math.random() * 5 + 4}s`;
-                symbol.style.color = `rgba(0, 0, 0, ${Math.random() * 0.5 + 0.5})`;
+                symbol.style.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
                 document.body.appendChild(symbol);
             }
         }
@@ -121,4 +177,3 @@
     </script>
 </body>
 </html>
-
