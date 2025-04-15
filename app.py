@@ -1,5 +1,5 @@
 import os
-import mysql.connector
+import sqlite3
 import requests
 from flask import Flask, render_template, request, jsonify
 from dotenv import load_dotenv
@@ -11,13 +11,10 @@ app = Flask(__name__)
 # Function to establish database connection
 def create_db_connection():
     try:
-        return mysql.connector.connect(
-            host=os.getenv("DB_HOST", "sql12.freesqldatabase.com"),
-            user=os.getenv("DB_USER", "sql12770307"),
-            password=os.getenv("DB_PASSWORD", "kz9jXxJP75"),
-            database=os.getenv("DB_NAME", "sql12770307")
-        )
-    except mysql.connector.Error as err:
+        conn = sqlite3.connect("expense_tracker.db")
+        conn.row_factory = sqlite3.Row
+        return conn
+    except sqlite3.Error as err:
         print(f"Error connecting to database: {err}")
         return None
 
@@ -35,18 +32,18 @@ def add_expense():
         return jsonify({"error": "Database connection failed"}), 500
 
     cursor = db.cursor()
-    
+
     try:
         query = """
             INSERT INTO expenses (user_id, category, amount, description, expense_date)
-            VALUES (%s, %s, %s, %s, %s)
+            VALUES (?, ?, ?, ?, ?)
         """
         values = (data['user_id'], data['category'], data['amount'], data['description'], data['expense_date'])
         cursor.execute(query, values)
         db.commit()
         return jsonify({"message": "Expense added successfully!"})
 
-    except mysql.connector.Error as err:
+    except sqlite3.Error as err:
         print(f"Error adding expense: {err}")
         return jsonify({"error": "Failed to add expense"}), 500
 
@@ -61,17 +58,18 @@ def get_expenses(user_id):
     if not db:
         return jsonify({"error": "Database connection failed"}), 500
 
-    cursor = db.cursor(dictionary=True)
+    cursor = db.cursor()
     try:
-        cursor.execute("SELECT category, amount, description, expense_date FROM expenses WHERE user_id = %s", (user_id,))
-        expenses = cursor.fetchall()
+        cursor.execute("SELECT category, amount, description, expense_date FROM expenses WHERE user_id = ?", (user_id,))
+        expenses = [dict(row) for row in cursor.fetchall()]
 
-        cursor.execute("SELECT SUM(amount) AS total_expense FROM expenses WHERE user_id = %s", (user_id,))
-        total_expense = cursor.fetchone()["total_expense"] or 0
+        cursor.execute("SELECT SUM(amount) AS total_expense FROM expenses WHERE user_id = ?", (user_id,))
+        row = cursor.fetchone()
+        total_expense = row[0] if row[0] is not None else 0
 
         return jsonify({"expenses": expenses, "total_expense": total_expense})
 
-    except mysql.connector.Error as err:
+    except sqlite3.Error as err:
         print(f"Error fetching expenses: {err}")
         return jsonify({"error": "Failed to fetch expenses"}), 500
 
@@ -79,23 +77,23 @@ def get_expenses(user_id):
         cursor.close()
         db.close()
 
-# ✅ NEW: AI suggestion based on expenses
+# AI suggestion based on expenses
 @app.route('/ai_suggestion/<int:user_id>', methods=['GET'])
 def ai_suggestion(user_id):
     db = create_db_connection()
     if not db:
         return jsonify({"error": "Database connection failed"}), 500
 
-    cursor = db.cursor(dictionary=True)
+    cursor = db.cursor()
     try:
-        cursor.execute("SELECT category, amount, description FROM expenses WHERE user_id = %s", (user_id,))
-        expenses = cursor.fetchall()
+        cursor.execute("SELECT category, amount, description FROM expenses WHERE user_id = ?", (user_id,))
+        rows = cursor.fetchall()
 
-        if not expenses:
+        if not rows:
             return jsonify({"message": "No expenses found for this user."}), 404
 
         expense_summary = "\n".join(
-            [f"{e['category']} - ₹{e['amount']} for {e['description']}" for e in expenses]
+            [f"{row[0]} - ₹{row[1]} for {row[2]}" for row in rows]
         )
 
         prompt = f"""Here are the weekly expenses of a user:
