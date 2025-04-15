@@ -1,169 +1,199 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Expense Tracker</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600&family=Roboto:wght@400&display=swap');
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Expense Tracker</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600&family=Roboto:wght@400&display=swap');
 
-        body {
-            font-family: 'Roboto', sans-serif;
-            background: linear-gradient(45deg, #ff9a9e, #fad0c4, #ffdde1);
-            background-size: 400% 400%;
-            animation: gradientBG 8s ease infinite;
-            color: #333;
-            text-align: center;
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-            overflow-y: auto;
-            position: relative;
-        }
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: linear-gradient(45deg, #ff9a9e, #fad0c4, #ffdde1);
+      background-size: 400% 400%;
+      animation: gradientBG 8s ease infinite;
+      color: #333;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      overflow-y: scroll;
+      position: relative;
+    }
 
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
 
-        .floating-symbol {
-            position: absolute;
-            font-size: 2.5rem;
-            opacity: 0.5;
-            color: rgba(0, 0, 0, 0.7);
-            animation: floatCurrency 6s linear infinite;
-        }
+    .floating-symbol {
+      position: absolute;
+      font-size: 2.5rem;
+      opacity: 0.5;
+      color: rgba(0, 0, 0, 0.4);
+      animation: floatCurrency 6s linear infinite;
+    }
 
-        @keyframes floatCurrency {
-            from { transform: translateY(100vh) scale(1); opacity: 0.7; }
-            to { transform: translateY(-10vh) scale(1.5); opacity: 0; }
-        }
+    @keyframes floatCurrency {
+      from { transform: translateY(100vh) scale(1); opacity: 0.7; }
+      to { transform: translateY(-10vh) scale(1.5); opacity: 0; }
+    }
 
-        .container {
-            max-width: 400px;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            margin: 50px auto;
-            position: relative;
-            z-index: 1;
-        }
+    .container {
+      max-width: 500px;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      margin: 50px auto;
+      position: relative;
+      z-index: 1;
+    }
 
-        h1 { font-family: 'Poppins', sans-serif; }
+    h1 {
+      font-family: 'Poppins', sans-serif;
+      margin-bottom: 20px;
+    }
 
-        input, button {
-            width: calc(100% - 20px);
-            padding: 12px;
-            margin: 10px 0;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            font-size: 16px;
-            display: block;
-        }
+    input, button {
+      width: calc(100% - 20px);
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+    }
 
-        button {
-            background: #007bff;
-            color: white;
-            font-weight: bold;
-            border: none;
-            cursor: pointer;
-        }
+    button {
+      background: #007bff;
+      color: white;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+    }
 
-        .expense-list, .total-expense {
-            margin-top: 20px;
-            text-align: left;
-        }
-    </style>
+    .expense-list, .total-expense, .ai-suggestion {
+      margin-top: 20px;
+      text-align: left;
+    }
+
+    .ai-suggestion {
+      background: #f1f1f1;
+      padding: 10px;
+      border-radius: 8px;
+      font-style: italic;
+      color: #444;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Expense Tracker</h1>
-        <h3>Add Expense</h3>
-        <input type="number" id="user_id" placeholder="User ID">
-        <input type="text" id="category" placeholder="Category">
-        <input type="number" id="amount" placeholder="Amount" step="0.01">
-        <input type="text" id="description" placeholder="Description">
-        <input type="date" id="expense_date">
-        <button onclick="addExpense()">Add Expense</button>
+  <div class="container">
+    <h1>Expense Tracker</h1>
 
-        <h3>Expense History</h3>
-        <input type="number" id="fetch_user_id" placeholder="Enter User ID">
-        <button onclick="getExpenses()">Get Expenses</button>
-        <div class="expense-list" id="expenseList"></div>
-        <div class="total-expense" id="totalExpense"></div>
-    </div>
+    <h3>Add Expense</h3>
+    <input type="number" id="user_id" placeholder="User ID" />
+    <input type="text" id="category" placeholder="Category" />
+    <input type="number" id="amount" placeholder="Amount" step="0.01" />
+    <input type="text" id="description" placeholder="Description" />
+    <input type="date" id="expense_date" />
+    <button onclick="addExpense()">Add Expense</button>
 
-    <script>
-        function addExpense() {
-            let userId = document.getElementById("user_id").value.trim();
-            let category = document.getElementById("category").value.trim();
-            let amount = parseFloat(document.getElementById("amount").value);
-            let description = document.getElementById("description").value.trim();
-            let expenseDate = document.getElementById("expense_date").value;
+    <h3>Expense History</h3>
+    <input type="number" id="fetch_user_id" placeholder="Enter User ID" />
+    <button onclick="getExpenses()">Get Expenses</button>
 
-            if (!userId || !category || isNaN(amount) || !description || !expenseDate) {
-                alert("Please fill all fields correctly!");
-                return;
-            }
+    <div class="expense-list" id="expenseList"></div>
+    <div class="total-expense" id="totalExpense"></div>
+    <div class="ai-suggestion" id="aiSuggestion"></div>
+  </div>
 
-            let expenseData = { category, amount, description, expenseDate };
-            let expenses = JSON.parse(localStorage.getItem(`expenses_${userId}`)) || [];
-            expenses.push(expenseData);
-            localStorage.setItem(`expenses_${userId}`, JSON.stringify(expenses));
+  <script>
+    function createFloatingSymbols() {
+      const symbols = ["$", "₹", "€", "¥"];
+      for (let i = 0; i < 20; i++) {
+        let symbol = document.createElement("div");
+        symbol.className = "floating-symbol";
+        symbol.innerHTML = symbols[Math.floor(Math.random() * symbols.length)];
+        symbol.style.left = `${Math.random() * 100}vw`;
+        symbol.style.animationDuration = `${Math.random() * 5 + 4}s`;
+        document.body.appendChild(symbol);
+      }
+    }
 
-            alert("Expense Added Successfully!");
-            document.querySelectorAll("input").forEach(input => input.value = "");
+    async function addExpense() {
+      const data = {
+        user_id: document.getElementById("user_id").value,
+        category: document.getElementById("category").value,
+        amount: parseFloat(document.getElementById("amount").value),
+        description: document.getElementById("description").value,
+        expense_date: document.getElementById("expense_date").value,
+      };
+
+      if (!data.user_id || !data.category || isNaN(data.amount) || !data.description || !data.expense_date) {
+        alert("Please fill all fields correctly!");
+        return;
+      }
+
+      try {
+        const res = await fetch("/add_expense", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+
+        const result = await res.json();
+        alert(result.message || "Expense added!");
+      } catch (err) {
+        console.error("Add Expense Error:", err);
+        alert("Error adding expense.");
+      }
+    }
+
+    async function getExpenses() {
+      const userId = document.getElementById("fetch_user_id").value;
+      const expenseList = document.getElementById("expenseList");
+      const totalDisplay = document.getElementById("totalExpense");
+      const aiBox = document.getElementById("aiSuggestion");
+
+      if (!userId) {
+        alert("Please enter a user ID");
+        return;
+      }
+
+      try {
+        const res = await fetch(`/get_expenses/${userId}`);
+        const data = await res.json();
+
+        if (!data.expenses || data.expenses.length === 0) {
+          expenseList.innerHTML = "<p>No expenses found for this user.</p>";
+          totalDisplay.innerHTML = "";
+          aiBox.innerHTML = "";
+          return;
         }
 
-        function getExpenses() {
-            let fetchUserId = document.getElementById("fetch_user_id").value.trim();
-            let expenseList = document.getElementById("expenseList");
-            let totalExpenseDisplay = document.getElementById("totalExpense");
+        expenseList.innerHTML = "";
+        data.expenses.forEach((item) => {
+          const div = document.createElement("div");
+          div.innerHTML = `
+            <p><strong>Category:</strong> ${item.category}</p>
+            <p><strong>Amount:</strong> ₹${Number(item.amount).toFixed(2)}</p>
+            <p><strong>Description:</strong> ${item.description}</p>
+            <p><strong>Date:</strong> ${item.expense_date}</p>
+            <hr/>
+          `;
+          expenseList.appendChild(div);
+        });
 
-            if (!fetchUserId) {
-                alert("Please enter a User ID!");
-                return;
-            }
+        totalDisplay.innerHTML = `<strong>Total: ₹${data.total_expense.toFixed(2)}</strong>`;
+        aiBox.innerHTML = `<strong>AI Suggestion:</strong><br/>${data.ai_suggestion || "No suggestion."}`;
+      } catch (err) {
+        console.error("Fetch Error:", err);
+        alert("Failed to fetch expenses.");
+      }
+    }
 
-            let expenses = JSON.parse(localStorage.getItem(`expenses_${fetchUserId}`)) || [];
-
-            if (expenses.length === 0) {
-                expenseList.innerHTML = "<p>No expenses found for this user.</p>";
-                totalExpenseDisplay.innerHTML = "";
-                return;
-            }
-
-            let totalExpense = expenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
-            expenseList.innerHTML = "";
-            expenses.forEach(expense => {
-                let expenseItem = document.createElement("div");
-                expenseItem.innerHTML = `
-                    <p><strong>Category:</strong> ${expense.category}</p>
-                    <p><strong>Amount:</strong> $${Number(expense.amount).toFixed(2)}</p>
-                    <p><strong>Description:</strong> ${expense.description}</p>
-                    <p><strong>Date:</strong> ${expense.expenseDate}</p>
-                    <hr>
-                `;
-                expenseList.appendChild(expenseItem);
-            });
-
-            totalExpenseDisplay.innerHTML = `<p>Total Expenses: <strong>$${totalExpense.toFixed(2)}</strong></p>`;
-        }
-
-        function createFloatingSymbols() {
-            const symbols = ["$", "₹", "€", "¥"];
-            for (let i = 0; i < 20; i++) {
-                let symbol = document.createElement("div");
-                symbol.className = "floating-symbol";
-                symbol.innerHTML = symbols[Math.floor(Math.random() * symbols.length)];
-                symbol.style.left = `${Math.random() * 100}vw`;
-                symbol.style.animationDuration = `${Math.random() * 5 + 4}s`;
-                document.body.appendChild(symbol);
-            }
-        }
-        createFloatingSymbols();
-    </script>
+    createFloatingSymbols();
+  </script>
 </body>
 </html>
