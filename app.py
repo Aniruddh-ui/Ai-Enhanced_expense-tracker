@@ -1,4 +1,4 @@
-import os 
+import os  
 import sqlite3
 import requests
 from flask import Flask, render_template, request, jsonify
@@ -49,7 +49,7 @@ Give a short financial suggestion to the user:
         }
 
         data = {
-            "model": "openrouter/llama3-8b",
+            "model": "meta-llama/llama-3-8b-instruct",
             "messages": [
                 {"role": "user", "content": prompt}
             ]
