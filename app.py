@@ -1,4 +1,4 @@
-import os  
+import os
 import sqlite3
 import requests
 from flask import Flask, render_template, request, jsonify
@@ -38,7 +38,7 @@ def generate_ai_suggestion(user_id):
 
         prompt = f"""Here are the weekly expenses of a user:
 {expense_summary}
-Give a short financial suggestion to the user: 
+Give a short financial suggestion to the user in bullet points:
 - Is spending okay?
 - Should they save more?
 - Suggest smart ways to invest or reduce spending."""
@@ -57,9 +57,10 @@ Give a short financial suggestion to the user:
 
         response = requests.post("https://openrouter.ai/api/v1/chat/completions", json=data, headers=headers)
         result = response.json()
-
         suggestion = result['choices'][0]['message']['content']
-        return suggestion
+
+        # Format into bullet points if needed
+        return "\n".join([line.strip() for line in suggestion.strip().split("\n") if line.strip()])
 
     except Exception as e:
         print(f"AI generation error: {e}")
@@ -83,7 +84,6 @@ def add_expense():
         return jsonify({"error": "Database connection failed"}), 500
 
     cursor = db.cursor()
-
     try:
         query = """
             INSERT INTO expenses (user_id, category, amount, description, expense_date)
@@ -102,7 +102,7 @@ def add_expense():
         cursor.close()
         db.close()
 
-# API to get expenses, total, and AI suggestion
+# API to get expenses and total
 @app.route('/get_expenses/<int:user_id>', methods=['GET'])
 def get_expenses(user_id):
     db = create_db_connection()
@@ -111,20 +111,16 @@ def get_expenses(user_id):
 
     cursor = db.cursor()
     try:
-        cursor.execute("SELECT category, amount, description, expense_date FROM expenses WHERE user_id = ?", (user_id,))
+        cursor.execute("SELECT id, category, amount, description, expense_date FROM expenses WHERE user_id = ?", (user_id,))
         expenses = [dict(row) for row in cursor.fetchall()]
 
         cursor.execute("SELECT SUM(amount) AS total_expense FROM expenses WHERE user_id = ?", (user_id,))
         row = cursor.fetchone()
         total_expense = row[0] if row[0] is not None else 0
 
-        # Add AI suggestion here
-        ai_suggestion = generate_ai_suggestion(user_id)
-
         return jsonify({
             "expenses": expenses,
-            "total_expense": total_expense,
-            "ai_suggestion": ai_suggestion
+            "total_expense": total_expense
         })
 
     except sqlite3.Error as err:
@@ -135,7 +131,28 @@ def get_expenses(user_id):
         cursor.close()
         db.close()
 
-# Optional: Keep AI-only route if needed
+# NEW: Delete an expense
+@app.route('/delete_expense/<int:expense_id>', methods=['DELETE'])
+def delete_expense(expense_id):
+    db = create_db_connection()
+    if not db:
+        return jsonify({"error": "Database connection failed"}), 500
+
+    cursor = db.cursor()
+    try:
+        cursor.execute("DELETE FROM expenses WHERE id = ?", (expense_id,))
+        db.commit()
+        return jsonify({"message": "Expense deleted successfully."})
+
+    except sqlite3.Error as err:
+        print(f"Error deleting expense: {err}")
+        return jsonify({"error": "Failed to delete expense."}), 500
+
+    finally:
+        cursor.close()
+        db.close()
+
+# AI suggestion only
 @app.route('/ai_suggestion/<int:user_id>', methods=['GET'])
 def ai_suggestion(user_id):
     suggestion = generate_ai_suggestion(user_id)
