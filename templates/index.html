@@ -163,6 +163,8 @@
   </div>
 
   <script>
+    let chartInstance;
+
     function createFloatingSymbols() {
       const symbols = ["$", "₹", "€", "¥"];
       for (let i = 0; i < 20; i++) {
@@ -198,6 +200,8 @@
 
         const result = await res.json();
         alert(result.message || "Expense added!");
+        getExpenses();
+        showChart();
       } catch (err) {
         console.error("Add Expense Error:", err);
         alert("Error adding expense.");
@@ -291,11 +295,9 @@
         const categories = Object.keys(data);
         const amounts = Object.values(data);
 
-        if (window.expenseChart) {
-          window.expenseChart.destroy();
-        }
+        if (chartInstance) chartInstance.destroy();
 
-        window.expenseChart = new Chart(ctx, {
+        chartInstance = new Chart(ctx, {
           type: "bar",
           data: {
             labels: categories,
@@ -304,11 +306,15 @@
               data: amounts,
               backgroundColor: "rgba(54, 162, 235, 0.7)",
               borderColor: "rgba(54, 162, 235, 1)",
-              borderWidth: 1
+              borderWidth: 1,
+              borderRadius: 6
             }]
           },
           options: {
             responsive: true,
+            plugins: {
+              legend: { display: false }
+            },
             scales: {
               y: {
                 beginAtZero: true
@@ -334,6 +340,7 @@
         const data = await res.json();
         alert(data.message || "Expense deleted.");
         getExpenses();
+        showChart();
       } catch (err) {
         console.error("Delete Error:", err);
         alert("Failed to delete expense.");
@@ -344,3 +351,4 @@
   </script>
 </body>
 </html>
+
