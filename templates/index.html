@@ -79,12 +79,24 @@
     }
 
     .ai-suggestion {
-      background: #f1f1f1;
-      padding: 10px;
-      border-radius: 8px;
-      font-style: italic;
-      color: #444;
+      background: #fff8dc;
+      padding: 15px 20px;
+      border-left: 5px solid #ffa500;
+      border-radius: 10px;
+      font-style: normal;
+      font-size: 16px;
+      line-height: 1.6;
+      color: #333;
       white-space: pre-line;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      margin-top: 25px;
+    }
+
+    .ai-suggestion strong {
+      display: block;
+      margin-bottom: 10px;
+      color: #ff8c00;
+      font-size: 18px;
     }
 
     .delete-btn {
@@ -217,7 +229,17 @@
       try {
         const res = await fetch(`/ai_suggestion/${userId}`);
         const data = await res.json();
-        aiBox.innerHTML = `<strong>AI Suggestion:</strong><br/>${data.ai_suggestion || "No suggestion available."}`;
+
+        const suggestion = data.ai_suggestion || "No suggestion available.";
+        const formatted = suggestion
+          .split('\n')
+          .map(line => `<li>${line.trim()}</li>`)
+          .join("");
+
+        aiBox.innerHTML = `
+          <strong>AI Suggestion:</strong>
+          <ul style="padding-left: 20px; margin: 0;">${formatted}</ul>
+        `;
       } catch (err) {
         console.error("AI Suggestion Error:", err);
         aiBox.innerHTML = "Failed to generate suggestion.";
