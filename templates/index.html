@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Expense Tracker</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600&family=Roboto:wght@400&display=swap');
 
@@ -56,6 +57,13 @@
       margin-bottom: 20px;
     }
 
+    h3 {
+      color: #007bff;
+      border-bottom: 2px solid #eee;
+      padding-bottom: 5px;
+      margin-top: 30px;
+    }
+
     input, button {
       width: calc(100% - 20px);
       padding: 12px;
@@ -76,6 +84,14 @@
     .expense-list, .total-expense, .ai-suggestion {
       margin-top: 20px;
       text-align: left;
+    }
+
+    .expense-list div {
+      background: #f9f9f9;
+      padding: 12px 15px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     }
 
     .ai-suggestion {
@@ -104,9 +120,21 @@
       background-color: #dc3545;
       border: none;
       padding: 5px 10px;
-      margin-top: 5px;
+      margin-top: 8px;
       border-radius: 5px;
       cursor: pointer;
+    }
+
+    canvas {
+      margin-top: 30px;
+      max-width: 100%;
+    }
+
+    @media (max-width: 500px) {
+      .container {
+        padding: 15px;
+        margin: 20px 10px;
+      }
     }
   </style>
 </head>
@@ -122,13 +150,15 @@
     <input type="date" id="expense_date" />
     <button onclick="addExpense()">Add Expense</button>
 
-    <h3>Expense History</h3>
+    <h3>Your Spending Overview</h3>
     <input type="number" id="fetch_user_id" placeholder="Enter User ID" />
     <button onclick="getExpenses()">Get Expenses</button>
     <button onclick="getAISuggestion()">Get AI Suggestion</button>
+    <button onclick="showChart()">Show Chart</button>
 
     <div class="expense-list" id="expenseList"></div>
     <div class="total-expense" id="totalExpense"></div>
+    <canvas id="expenseChart" width="400" height="250"></canvas>
     <div class="ai-suggestion" id="aiSuggestion"></div>
   </div>
 
@@ -203,7 +233,6 @@
             <p><strong>Description:</strong> ${item.description}</p>
             <p><strong>Date:</strong> ${item.expense_date}</p>
             <button class="delete-btn" onclick="deleteExpense(${item.id})">Delete</button>
-            <hr/>
           `;
           expenseList.appendChild(div);
         });
@@ -246,6 +275,54 @@
       }
     }
 
+    async function showChart() {
+      const userId = document.getElementById("fetch_user_id").value;
+      const ctx = document.getElementById("expenseChart").getContext("2d");
+
+      if (!userId) {
+        alert("Please enter user ID to view chart.");
+        return;
+      }
+
+      try {
+        const res = await fetch(`/chart_data/${userId}`);
+        const data = await res.json();
+
+        const categories = Object.keys(data);
+        const amounts = Object.values(data);
+
+        if (window.expenseChart) {
+          window.expenseChart.destroy();
+        }
+
+        window.expenseChart = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: categories,
+            datasets: [{
+              label: "Amount Spent (₹)",
+              data: amounts,
+              backgroundColor: "rgba(54, 162, 235, 0.7)",
+              borderColor: "rgba(54, 162, 235, 1)",
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: {
+                beginAtZero: true
+              }
+            }
+          }
+        });
+
+      } catch (err) {
+        console.error("Chart fetch error:", err);
+        alert("Failed to load chart.");
+      }
+    }
+
     async function deleteExpense(expenseId) {
       if (!confirm("Are you sure you want to delete this expense?")) return;
 
@@ -256,7 +333,7 @@
 
         const data = await res.json();
         alert(data.message || "Expense deleted.");
-        getExpenses(); // Refresh list
+        getExpenses();
       } catch (err) {
         console.error("Delete Error:", err);
         alert("Failed to delete expense.");

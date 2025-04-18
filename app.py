@@ -59,7 +59,6 @@ Give a short financial suggestion to the user in bullet points:
         result = response.json()
         suggestion = result['choices'][0]['message']['content']
 
-        # Format into bullet points if needed
         return "\n".join([line.strip() for line in suggestion.strip().split("\n") if line.strip()])
 
     except Exception as e:
@@ -131,7 +130,7 @@ def get_expenses(user_id):
         cursor.close()
         db.close()
 
-# NEW: Delete an expense
+# New: Delete an expense
 @app.route('/delete_expense/<int:expense_id>', methods=['DELETE'])
 def delete_expense(expense_id):
     db = create_db_connection()
@@ -147,6 +146,35 @@ def delete_expense(expense_id):
     except sqlite3.Error as err:
         print(f"Error deleting expense: {err}")
         return jsonify({"error": "Failed to delete expense."}), 500
+
+    finally:
+        cursor.close()
+        db.close()
+
+# New: Endpoint to get chart data by category
+@app.route('/chart_data/<int:user_id>', methods=['GET'])
+def chart_data(user_id):
+    db = create_db_connection()
+    if not db:
+        return jsonify({"error": "Database connection failed"}), 500
+
+    cursor = db.cursor()
+    try:
+        cursor.execute("""
+            SELECT category, SUM(amount) as total
+            FROM expenses
+            WHERE user_id = ?
+            GROUP BY category
+        """, (user_id,))
+
+        chart_data = cursor.fetchall()
+        result = {row[0]: row[1] for row in chart_data}
+
+        return jsonify(result)
+
+    except sqlite3.Error as err:
+        print(f"Error fetching chart data: {err}")
+        return jsonify({"error": "Failed to fetch chart data."}), 500
 
     finally:
         cursor.close()
