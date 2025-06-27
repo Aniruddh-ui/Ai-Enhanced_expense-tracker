@@ -185,6 +185,62 @@ def chart_data(user_id):
 def ai_suggestion(user_id):
     suggestion = generate_ai_suggestion(user_id)
     return jsonify({"ai_suggestion": suggestion})
+@app.route('/query_agent', methods=['POST'])
+def query_agent():
+    data = request.json
+    user_id = data.get("user_id")
+    user_query = data.get("query")
+
+    db = create_db_connection()
+    if not db:
+        return jsonify({"error": "Database connection failed"}), 500
+
+    cursor = db.cursor()
+    try:
+        # Load all expenses for the user
+        cursor.execute("SELECT category, amount, description, expense_date FROM expenses WHERE user_id = ?", (user_id,))
+        rows = cursor.fetchall()
+        if not rows:
+            return jsonify({"answer": "No expenses found for the user."})
+
+        # Convert data to a simple CSV string for the LLM to analyze
+        data_str = "\n".join([f"{r[0]},{r[1]},{r[2]},{r[3]}" for r in rows])
+
+        # Prompt to LLM
+        prompt = f"""
+You are an AI financial assistant. A user has the following expense records:
+category, amount, description, date
+{data_str}
+
+Answer this question based on the data above:
+'{user_query}'
+Give your answer in one paragraph.
+"""
+
+        headers = {
+            "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY')}",
+            "Content-Type": "application/json"
+        }
+
+        payload = {
+            "model": "meta-llama/llama-3-8b-instruct",
+            "messages": [{"role": "user", "content": prompt}]
+        }
+
+        response = requests.post("https://openrouter.ai/api/v1/chat/completions", json=payload, headers=headers)
+        result = response.json()
+        answer = result['choices'][0]['message']['content']
+
+        return jsonify({"answer": answer})
+
+    except Exception as e:
+        print(f"Query agent error: {e}")
+        return jsonify({"answer": "Unable to process your question."})
+
+    finally:
+        cursor.close()
+        db.close()
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000, debug=True)

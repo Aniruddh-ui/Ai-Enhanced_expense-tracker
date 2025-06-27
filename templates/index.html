@@ -160,6 +160,11 @@
     <div class="total-expense" id="totalExpense"></div>
     <canvas id="expenseChart" width="400" height="250"></canvas>
     <div class="ai-suggestion" id="aiSuggestion"></div>
+
+    <h3>Ask the AI Agent</h3>
+    <input type="text" id="agentQuery" placeholder="Ask a question about your expenses..." />
+    <button onclick="askAgent()">Ask Agent</button>
+    <div class="ai-suggestion" id="agentAnswer"></div>
   </div>
 
   <script>
@@ -344,6 +349,31 @@
       } catch (err) {
         console.error("Delete Error:", err);
         alert("Failed to delete expense.");
+      }
+    }
+
+    async function askAgent() {
+      const userId = document.getElementById("fetch_user_id").value;
+      const query = document.getElementById("agentQuery").value;
+      const answerBox = document.getElementById("agentAnswer");
+
+      if (!userId || !query) {
+        alert("Please enter both user ID and your question.");
+        return;
+      }
+
+      answerBox.innerHTML = "Thinking...";
+      try {
+        const res = await fetch("/query_agent", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id: userId, query })
+        });
+        const data = await res.json();
+        answerBox.innerHTML = `<strong>Agent Answer:</strong><br>${data.answer || "No answer available."}`;
+      } catch (err) {
+        console.error("Agent Query Error:", err);
+        answerBox.innerHTML = "Failed to get answer from agent.";
       }
     }
 
