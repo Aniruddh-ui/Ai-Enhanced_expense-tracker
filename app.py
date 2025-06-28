@@ -276,24 +276,30 @@ def predict_expense(user_id):
             query += " AND category = ?"
             params.append(category)
         df = pd.read_sql_query(query, db, params=params)
-        if df.empty or len(df) < 6:
-            return jsonify({"predictions": [], "message": "Not enough data to forecast."})
+
+        # Group by week/month and sum amounts
+        df['expense_date'] = pd.to_datetime(df['expense_date'])
+        freq = 'W' if forecast_type == "weekly" else 'M'
+        df = df.groupby(pd.Grouper(key='expense_date', freq=freq)).sum().reset_index()
+        df = df.sort_values('expense_date')
+        df['period'] = range(len(df))
+        # Remove periods with zero amount (no expenses in that week/month)
+        df = df[df['amount'] > 0]
+        if len(df) < 4:
+            return jsonify({"predictions": [], "message": "Not enough unique weeks/months of data to forecast. Please add more expenses spread across different weeks or months."})
 
         df['expense_date'] = pd.to_datetime(df['expense_date'])
         freq = 'W' if forecast_type == "weekly" else 'M'
         df = df.groupby(pd.Grouper(key='expense_date', freq=freq)).sum().reset_index()
         df = df.sort_values('expense_date')
         df['period'] = range(len(df))
-        X = df[['period']]
-        y = df['amount']
-
         # Feature engineering: add lag features and rolling mean
         df['lag1'] = df['amount'].shift(1)
         df['lag2'] = df['amount'].shift(2)
         df['rolling_mean3'] = df['amount'].rolling(window=3).mean().shift(1)
         df = df.dropna()
-        if len(df) < 3:
-            return jsonify({"predictions": [], "message": "Not enough data after feature engineering."})
+        if len(df) < 2:
+            return jsonify({"predictions": [], "message": "Not enough sequential data after feature engineering. Please add more expenses in different weeks/months."})
 
         features = ['period', 'lag1', 'lag2', 'rolling_mean3']
         X = df[features]
@@ -307,16 +313,17 @@ def predict_expense(user_id):
         # Prepare future periods for prediction
         last_row = df.iloc[-1]
         preds = []
-        for i in range(1, n_periods + 1):
-            next_period = int(last_row['period']) + i
-            # For lags, use last known or predicted values
-            lag1 = preds[-1] if preds else last_row['amount']
-            lag2 = preds[-2] if len(preds) > 1 else last_row['lag1']
-            rolling_vals = list(df['amount'][-2:]) + preds[-2:] if len(df['amount']) >= 2 else [last_row['amount']]
-            rolling_mean3 = np.mean(rolling_vals[-3:]) if len(rolling_vals) >= 3 else np.mean(rolling_vals)
-            X_pred = np.array([[next_period, lag1, lag2, rolling_mean3]])
-            pred = float(model.predict(X_pred)[0])
+        last_amounts = df['amount'].tolist()[-3:]
+        last_rolling = df['rolling_mean3'].iloc[-1]
+        for i in range(n_periods):
+            lags = [last_amounts[-1] if len(last_amounts) > 0 else 0,
+                    last_amounts[-2] if len(last_amounts) > 1 else 0,
+                    last_amounts[-3] if len(last_amounts) > 2 else 0]
+            features_pred = np.array([[last_row['period'] + i + 1, lags[0], lags[1], last_rolling]])
+            pred = model.predict(features_pred)[0]
             preds.append(max(0, round(pred, 2)))
+            last_amounts = [pred] + last_amounts[:2]
+            last_rolling = np.mean(last_amounts)
 
         result = [{"period": i + 1, "predicted_amount": p} for i, p in enumerate(preds)]
         period_label = "week" if forecast_type == "weekly" else "month"
