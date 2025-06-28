@@ -86,12 +86,59 @@
       text-align: left;
     }
 
-    .expense-list div {
-      background: #f9f9f9;
-      padding: 12px 15px;
-      border-radius: 10px;
-      margin-bottom: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    .expense-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin-bottom: 24px;
+      background: #fff;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.10);
+      font-size: 16px;
+      transition: box-shadow 0.2s;
+    }
+    .expense-table th, .expense-table td {
+      padding: 14px 16px;
+      text-align: left;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .expense-table th {
+      background: linear-gradient(90deg, #007bff 60%, #6ec6ff 100%);
+      color: #fff;
+      font-weight: 700;
+      border-bottom: 2px solid #e0e0e0;
+      font-size: 17px;
+      letter-spacing: 0.5px;
+    }
+    .expense-table tr:nth-child(even) {
+      background: #f7fbff;
+    }
+    .expense-table tr:hover {
+      background: #e3f0ff;
+      box-shadow: 0 2px 8px rgba(0,123,255,0.08);
+    }
+    .expense-table td button.delete-btn {
+      margin: 0;
+      padding: 6px 18px;
+      font-size: 15px;
+      border-radius: 6px;
+      background: linear-gradient(90deg, #ff416c 60%, #ff4b2b 100%);
+      border: none;
+      color: #fff;
+      font-weight: 600;
+      box-shadow: 0 1px 4px rgba(255,65,108,0.10);
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    .expense-table td button.delete-btn:hover {
+      background: linear-gradient(90deg, #ff4b2b 60%, #ff416c 100%);
+      box-shadow: 0 2px 8px rgba(255,65,108,0.18);
+    }
+    .expense-table th:first-child, .expense-table td:first-child {
+      border-top-left-radius: 14px;
+    }
+    .expense-table th:last-child, .expense-table td:last-child {
+      border-top-right-radius: 14px;
     }
 
     .ai-suggestion {
@@ -247,18 +294,32 @@
           return;
         }
 
-        expenseList.innerHTML = "";
+        // Build table
+        let table = `<table class="expense-table">
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Amount (₹)</th>
+              <th>Description</th>
+              <th>Date</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+        `;
         data.expenses.forEach((item) => {
-          const div = document.createElement("div");
-          div.innerHTML = `
-            <p><strong>Category:</strong> ${item.category}</p>
-            <p><strong>Amount:</strong> ₹${Number(item.amount).toFixed(2)}</p>
-            <p><strong>Description:</strong> ${item.description}</p>
-            <p><strong>Date:</strong> ${item.expense_date}</p>
-            <button class="delete-btn" onclick="deleteExpense(${item.id})">Delete</button>
+          table += `
+            <tr>
+              <td>${item.category}</td>
+              <td>₹${Number(item.amount).toFixed(2)}</td>
+              <td>${item.description}</td>
+              <td>${item.expense_date}</td>
+              <td><button class="delete-btn" onclick="deleteExpense(${item.id})">Delete</button></td>
+            </tr>
           `;
-          expenseList.appendChild(div);
         });
+        table += `</tbody></table>`;
+        expenseList.innerHTML = table;
 
         totalDisplay.innerHTML = `<strong>Total: ₹${data.total_expense.toFixed(2)}</strong>`;
       } catch (err) {

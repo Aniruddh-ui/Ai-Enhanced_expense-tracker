@@ -227,7 +227,7 @@ def query_agent():
                 ml_response = client.get(ml_url)
                 ml_json = ml_response.get_json()
                 prediction_text = f"Prediction: {ml_json.get('message', '')} {ml_json.get('predictions', '')}"
-            prompt = f"""User asked: '{user_query}'\n{prediction_text}\nBased on the user's expenses, explain this forecast in simple terms."""
+            prompt = f"""User asked: '{user_query}'\nThe forecast for the next period is: {ml_json.get('predictions', '')}.\nPlease explain what this means in simple terms, without inventing or recalculating any numbers. Do not provide any new numbers or daily breakdowns."""
         else:
             data_str = "\n".join([f"{r[0]},{r[1]},{r[2]},{r[3]}" for r in rows])
             prompt = f"""
