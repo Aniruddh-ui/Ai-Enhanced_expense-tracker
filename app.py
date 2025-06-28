@@ -259,6 +259,8 @@ Give your answer in one paragraph.
         db.close()
 
 # ML Forecasting API
+# ...existing code...
+
 @app.route('/predict_expense/<int:user_id>', methods=['GET'])
 def predict_expense(user_id):
     forecast_type = request.args.get("type", "weekly")  # weekly or monthly
@@ -277,6 +279,9 @@ def predict_expense(user_id):
             params.append(category)
         df = pd.read_sql_query(query, db, params=params)
 
+        if df.empty or df['amount'].sum() == 0:
+            return jsonify({"predictions": [], "message": "No expenses found for this user/category."})
+
         # Group by week/month and sum amounts
         df['expense_date'] = pd.to_datetime(df['expense_date'])
         freq = 'W' if forecast_type == "weekly" else 'M'
@@ -288,11 +293,6 @@ def predict_expense(user_id):
         if len(df) < 4:
             return jsonify({"predictions": [], "message": "Not enough unique weeks/months of data to forecast. Please add more expenses spread across different weeks or months."})
 
-        df['expense_date'] = pd.to_datetime(df['expense_date'])
-        freq = 'W' if forecast_type == "weekly" else 'M'
-        df = df.groupby(pd.Grouper(key='expense_date', freq=freq)).sum().reset_index()
-        df = df.sort_values('expense_date')
-        df['period'] = range(len(df))
         # Feature engineering: add lag features and rolling mean
         df['lag1'] = df['amount'].shift(1)
         df['lag2'] = df['amount'].shift(2)
@@ -315,13 +315,19 @@ def predict_expense(user_id):
         preds = []
         last_amounts = df['amount'].tolist()[-3:]
         last_rolling = df['rolling_mean3'].iloc[-1]
+        max_hist = df['amount'].max()
+        min_hist = df['amount'].min()
         for i in range(n_periods):
-            lags = [last_amounts[-1] if len(last_amounts) > 0 else 0,
-                    last_amounts[-2] if len(last_amounts) > 1 else 0,
-                    last_amounts[-3] if len(last_amounts) > 2 else 0]
+            lags = [
+                last_amounts[-1] if len(last_amounts) > 0 else min_hist,
+                last_amounts[-2] if len(last_amounts) > 1 else min_hist,
+                last_amounts[-3] if len(last_amounts) > 2 else min_hist
+            ]
             features_pred = np.array([[last_row['period'] + i + 1, lags[0], lags[1], last_rolling]])
             pred = model.predict(features_pred)[0]
-            preds.append(max(0, round(pred, 2)))
+            # Cap prediction to a reasonable range (0 to 2x max historical)
+            pred = max(0, min(round(pred, 2), 2 * max_hist))
+            preds.append(pred)
             last_amounts = [pred] + last_amounts[:2]
             last_rolling = np.mean(last_amounts)
 
