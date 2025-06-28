@@ -165,6 +165,20 @@
     <input type="text" id="agentQuery" placeholder="Ask a question about your expenses..." />
     <button onclick="askAgent()">Ask Agent</button>
     <div class="ai-suggestion" id="agentAnswer"></div>
+
+    <h3>Expense Forecast</h3>
+    <div style="background:#f5faff;padding:18px 20px;border-radius:10px;margin-bottom:18px;box-shadow:0 2px 8px rgba(0,0,0,0.07);text-align:left;">
+      <label for="forecastType"><strong>Forecast Type:</strong></label>
+      <select id="forecastType" style="margin-bottom:10px;">
+        <option value="weekly">Weekly</option>
+        <option value="monthly">Monthly</option>
+      </select>
+      <input type="text" id="forecastCategory" placeholder="Category (optional)" style="margin-bottom:10px;" />
+      <input type="number" id="forecastPeriods" placeholder="Periods (e.g. 1, 2, 3)" min="1" value="1" style="margin-bottom:10px;" />
+      <button onclick="getForecast()" style="background:#28a745;">Get Forecast</button>
+      <div class="ai-suggestion" id="forecastResult" style="margin-top:15px;"></div>
+      <div style="font-size:13px;color:#888;margin-top:8px;">Example: "Forecast my food expenses for the next 2 weeks"</div>
+    </div>
   </div>
 
   <script>
@@ -377,8 +391,39 @@
       }
     }
 
-    createFloatingSymbols();
+    async function getForecast() {
+      const userId = document.getElementById("fetch_user_id").value;
+      const type = document.getElementById("forecastType").value;
+      const category = document.getElementById("forecastCategory").value;
+      const n_periods = document.getElementById("forecastPeriods").value || 1;
+      const resultBox = document.getElementById("forecastResult");
+
+      if (!userId) {
+        alert("Please enter user ID for forecast.");
+        return;
+      }
+
+      let url = `/predict_expense/${userId}?type=${type}&n_periods=${n_periods}`;
+      if (category) {
+        url += `&category=${encodeURIComponent(category)}`;
+      }
+
+      resultBox.innerHTML = "Generating forecast...";
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.error) {
+          resultBox.innerHTML = `<span style='color:red;'>${data.error}</span>`;
+        } else if (data.predictions && data.predictions.length > 0) {
+          let predList = data.predictions.map(p => `Period ${p.period}: ₹${p.predicted_amount}`).join('<br>');
+          resultBox.innerHTML = `<strong>Forecast Result:</strong><br>${data.message}<br>${predList}`;
+        } else {
+          resultBox.innerHTML = `<strong>Forecast Result:</strong><br>${data.message || "No forecast available."}`;
+        }
+      } catch (err) {
+        console.error("Forecast Error:", err);
+        resultBox.innerHTML = "Failed to get forecast.";
+      }
+    }
   </script>
-</body>
-</html>
 

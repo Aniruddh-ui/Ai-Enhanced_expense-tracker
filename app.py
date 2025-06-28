@@ -1,3 +1,6 @@
+import pandas as pd
+import numpy as np
+from sklearn.linear_model import LinearRegression
 import os
 import sqlite3
 import requests
@@ -187,9 +190,10 @@ def ai_suggestion(user_id):
     return jsonify({"ai_suggestion": suggestion})
 @app.route('/query_agent', methods=['POST'])
 def query_agent():
+    import re
     data = request.json
     user_id = data.get("user_id")
-    user_query = data.get("query")
+    user_query = data.get("query", "").lower()
 
     db = create_db_connection()
     if not db:
@@ -197,17 +201,36 @@ def query_agent():
 
     cursor = db.cursor()
     try:
-        # Load all expenses for the user
         cursor.execute("SELECT category, amount, description, expense_date FROM expenses WHERE user_id = ?", (user_id,))
         rows = cursor.fetchall()
         if not rows:
             return jsonify({"answer": "No expenses found for the user."})
 
-        # Convert data to a simple CSV string for the LLM to analyze
-        data_str = "\n".join([f"{r[0]},{r[1]},{r[2]},{r[3]}" for r in rows])
-
-        # Prompt to LLM
-        prompt = f"""
+        # Simple intent detection for forecasting
+        if any(word in user_query for word in ["predict", "forecast", "next week", "next month"]):
+            forecast_type = "weekly" if "week" in user_query else "monthly"
+            n_periods = 1
+            match = re.search(r"next (\\d+) (week|month)", user_query)
+            if match:
+                n_periods = int(match.group(1))
+            category = None
+            for cat in set(r[0].lower() for r in rows):
+                if cat in user_query:
+                    category = cat
+                    break
+            # Call ML model directly
+            ml_url = f"/predict_expense/{user_id}?type={forecast_type}&n_periods={n_periods}"
+            if category:
+                ml_url += f"&category={category}"
+            # Use Flask test client to call the ML API internally
+            with app.test_client() as client:
+                ml_response = client.get(ml_url)
+                ml_json = ml_response.get_json()
+                prediction_text = f"Prediction: {ml_json.get('message', '')} {ml_json.get('predictions', '')}"
+            prompt = f"""User asked: '{user_query}'\n{prediction_text}\nBased on the user's expenses, explain this forecast in simple terms."""
+        else:
+            data_str = "\n".join([f"{r[0]},{r[1]},{r[2]},{r[3]}" for r in rows])
+            prompt = f"""
 You are an AI financial assistant. A user has the following expense records:
 category, amount, description, date
 {data_str}
@@ -216,31 +239,98 @@ Answer this question based on the data above:
 '{user_query}'
 Give your answer in one paragraph.
 """
-
         headers = {
             "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY')}",
             "Content-Type": "application/json"
         }
-
         payload = {
             "model": "meta-llama/llama-3-8b-instruct",
             "messages": [{"role": "user", "content": prompt}]
         }
-
         response = requests.post("https://openrouter.ai/api/v1/chat/completions", json=payload, headers=headers)
         result = response.json()
         answer = result['choices'][0]['message']['content']
-
         return jsonify({"answer": answer})
-
     except Exception as e:
         print(f"Query agent error: {e}")
         return jsonify({"answer": "Unable to process your question."})
-
     finally:
         cursor.close()
         db.close()
 
+# ML Forecasting API
+@app.route('/predict_expense/<int:user_id>', methods=['GET'])
+def predict_expense(user_id):
+    forecast_type = request.args.get("type", "weekly")  # weekly or monthly
+    category = request.args.get("category", None)       # optional
+    n_periods = int(request.args.get("n_periods", 1))   # how many future periods
 
+    db = create_db_connection()
+    if not db:
+        return jsonify({"error": "Database connection failed"}), 500
+
+    try:
+        query = "SELECT expense_date, amount FROM expenses WHERE user_id = ?"
+        params = [user_id]
+        if category:
+            query += " AND category = ?"
+            params.append(category)
+        df = pd.read_sql_query(query, db, params=params)
+        if df.empty or len(df) < 6:
+            return jsonify({"predictions": [], "message": "Not enough data to forecast."})
+
+        df['expense_date'] = pd.to_datetime(df['expense_date'])
+        freq = 'W' if forecast_type == "weekly" else 'M'
+        df = df.groupby(pd.Grouper(key='expense_date', freq=freq)).sum().reset_index()
+        df = df.sort_values('expense_date')
+        df['period'] = range(len(df))
+        X = df[['period']]
+        y = df['amount']
+
+        # Feature engineering: add lag features and rolling mean
+        df['lag1'] = df['amount'].shift(1)
+        df['lag2'] = df['amount'].shift(2)
+        df['rolling_mean3'] = df['amount'].rolling(window=3).mean().shift(1)
+        df = df.dropna()
+        if len(df) < 3:
+            return jsonify({"predictions": [], "message": "Not enough data after feature engineering."})
+
+        features = ['period', 'lag1', 'lag2', 'rolling_mean3']
+        X = df[features]
+        y = df['amount']
+
+        # Use Ridge regression for better regularization
+        from sklearn.linear_model import Ridge
+        model = Ridge(alpha=1.0)
+        model.fit(X, y)
+
+        # Prepare future periods for prediction
+        last_row = df.iloc[-1]
+        preds = []
+        for i in range(1, n_periods + 1):
+            next_period = int(last_row['period']) + i
+            # For lags, use last known or predicted values
+            lag1 = preds[-1] if preds else last_row['amount']
+            lag2 = preds[-2] if len(preds) > 1 else last_row['lag1']
+            rolling_vals = list(df['amount'][-2:]) + preds[-2:] if len(df['amount']) >= 2 else [last_row['amount']]
+            rolling_mean3 = np.mean(rolling_vals[-3:]) if len(rolling_vals) >= 3 else np.mean(rolling_vals)
+            X_pred = np.array([[next_period, lag1, lag2, rolling_mean3]])
+            pred = float(model.predict(X_pred)[0])
+            preds.append(max(0, round(pred, 2)))
+
+        result = [{"period": i + 1, "predicted_amount": p} for i, p in enumerate(preds)]
+        period_label = "week" if forecast_type == "weekly" else "month"
+        return jsonify({
+            "forecast_type": forecast_type,
+            "category": category or "All",
+            "n_periods": n_periods,
+            "predictions": result,
+            "message": f"Forecast for next {n_periods} {period_label}(s)."
+        })
+    except Exception as e:
+        print(f"Forecasting error: {e}")
+        return jsonify({"error": "Forecasting failed."}), 500
+    finally:
+        db.close()
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000, debug=True)
