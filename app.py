@@ -47,50 +47,54 @@ def generate_ai_suggestion(user_id):
 
     cursor = db.cursor()
     try:
-        cursor.execute("SELECT category, amount, description FROM expenses WHERE user_id = ?", (user_id,))
+        cursor.execute("SELECT category, amount, description, expense_date FROM expenses WHERE user_id = ?", (user_id,))
         rows = cursor.fetchall()
-
         cursor.execute("SELECT balance FROM user_balance WHERE user_id = ?", (user_id,))
         row = cursor.fetchone()
         balance = row[0] if row else 0
-
         if not rows:
             return "No expenses to analyze."
 
+        # ML forecast for next period (week)
+        with app.test_client() as client:
+            ml_response = client.get(f"/predict_expense/{user_id}?type=weekly&n_periods=1")
+            ml_json = ml_response.get_json()
+            forecast = ml_json.get('predictions', [])
+            forecast_msg = ml_json.get('message', '')
+        forecast_str = f"Forecast for next week: ₹{forecast[0]['predicted_amount']}" if forecast else forecast_msg
+
         expense_summary = "\n".join(
-            [f"{row[0]} - ₹{row[1]} for {row[2]}" for row in rows]
+            [f"{row[0]} - ₹{row[1]} for {row[2]} on {row[3]}" for row in rows[-5:]]
         )
 
-        prompt = f"""Here are the weekly expenses of a user:
+        prompt = f"""
+You are a smart financial assistant. Here are the user's last 5 expenses:
 {expense_summary}
-The user's current balance is ₹{balance}.
-Give a short financial suggestion to the user in bullet points:
-- Is spending okay?
-- Should they save more?
-- Suggest smart ways to invest or reduce spending."""
+Current balance: ₹{balance}.
+{forecast_str}
 
+Give 3 actionable suggestions in bullet points:
+- Is the spending pattern healthy?
+- Should the user save more?
+- Suggest a smart way to invest or reduce spending.
+"""
         headers = {
             "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY')}",
             "Content-Type": "application/json"
         }
-
         data = {
             "model": "meta-llama/llama-3-8b-instruct",
             "messages": [
                 {"role": "user", "content": prompt}
             ]
         }
-
         response = requests.post("https://openrouter.ai/api/v1/chat/completions", json=data, headers=headers)
         result = response.json()
         suggestion = result['choices'][0]['message']['content']
-
         return "\n".join([line.strip() for line in suggestion.strip().split("\n") if line.strip()])
-
     except Exception as e:
         print(f"AI generation error: {e}")
         return "AI suggestion not available."
-
     finally:
         cursor.close()
         db.close()
@@ -414,6 +418,59 @@ def predict_expense(user_id):
         print(f"Forecasting error: {e}")
         return jsonify({"error": "Forecasting failed."}), 500
     finally:
+        db.close()
+# Financial Advisor endpoint: gives savings/investment tips using ML and user data
+@app.route('/financial_advisor/<int:user_id>', methods=['GET'])
+def financial_advisor(user_id):
+    db = create_db_connection()
+    if not db:
+        return jsonify({"error": "Database connection failed"}), 500
+    cursor = db.cursor()
+    try:
+        cursor.execute("SELECT category, amount, description, expense_date FROM expenses WHERE user_id = ?", (user_id,))
+        rows = cursor.fetchall()
+        cursor.execute("SELECT balance FROM user_balance WHERE user_id = ?", (user_id,))
+        row = cursor.fetchone()
+        balance = row[0] if row else 0
+        if not rows:
+            return jsonify({"advisor": "No expenses to analyze."})
+        # ML forecast for next month
+        with app.test_client() as client:
+            ml_response = client.get(f"/predict_expense/{user_id}?type=monthly&n_periods=1")
+            ml_json = ml_response.get_json()
+            forecast = ml_json.get('predictions', [])
+            forecast_msg = ml_json.get('message', '')
+        forecast_str = f"Forecast for next month: ₹{forecast[0]['predicted_amount']}" if forecast else forecast_msg
+        expense_summary = "\n".join(
+            [f"{row[0]} - ₹{row[1]} for {row[2]} on {row[3]}" for row in rows[-5:]]
+        )
+        prompt = f"""
+You are a financial advisor AI. Here are the user's last 5 expenses:
+{expense_summary}
+Current balance: ₹{balance}.
+{forecast_str}
+
+Give 3 personalized tips for saving money and investing wisely, based on the user's pattern. Be practical and concise.
+"""
+        headers = {
+            "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY')}",
+            "Content-Type": "application/json"
+        }
+        data = {
+            "model": "meta-llama/llama-3-8b-instruct",
+            "messages": [
+                {"role": "user", "content": prompt}
+            ]
+        }
+        response = requests.post("https://openrouter.ai/api/v1/chat/completions", json=data, headers=headers)
+        result = response.json()
+        advisor = result['choices'][0]['message']['content']
+        return jsonify({"advisor": advisor})
+    except Exception as e:
+        print(f"Financial advisor error: {e}")
+        return jsonify({"advisor": "Financial advisor not available."})
+    finally:
+        cursor.close()
         db.close()
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000, debug=True)
