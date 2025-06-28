@@ -187,7 +187,40 @@
 </head>
 <body>
   <div class="container">
-    <h1>Expense Tracker</h1>
+    <h1>Expense Tracker Dashboard</h1>
+
+    <!-- Dashboard Summary Cards -->
+    <div style="display: flex; flex-wrap: wrap; gap: 18px; justify-content: space-between; margin-bottom: 30px;">
+      <div style="flex:1; min-width:180px; background:linear-gradient(90deg,#ffb347,#ffcc33);border-radius:12px;padding:18px 0;box-shadow:0 2px 8px rgba(255,179,71,0.12);margin-right:8px;">
+        <div style="font-size:2.2rem;font-weight:700;">₹<span id="dashboardTotal">0.00</span></div>
+        <div style="color:#fff;font-weight:600;">Total Expenses</div>
+      </div>
+      <div style="flex:1; min-width:180px; background:linear-gradient(90deg,#43e97b,#38f9d7);border-radius:12px;padding:18px 0;box-shadow:0 2px 8px rgba(67,233,123,0.12);margin-right:8px;">
+        <div style="font-size:2.2rem;font-weight:700;">₹<span id="dashboardRevenue">0.00</span></div>
+        <div style="color:#fff;font-weight:600;">Revenue</div>
+      </div>
+      <div style="flex:1; min-width:180px; background:linear-gradient(90deg,#fa709a,#fee140);border-radius:12px;padding:18px 0;box-shadow:0 2px 8px rgba(250,112,154,0.12);margin-right:8px;">
+        <div style="font-size:2.2rem;font-weight:700;" id="dashboardIssues">0</div>
+        <div style="color:#fff;font-weight:600;">Fixed Issues</div>
+      </div>
+      <div style="flex:1; min-width:180px; background:linear-gradient(90deg,#30cfd0,#330867);border-radius:12px;padding:18px 0;box-shadow:0 2px 8px rgba(48,207,208,0.12);margin-right:8px;">
+        <div style="font-size:2.2rem;font-weight:700;" id="dashboardFollowers">0</div>
+        <div style="color:#fff;font-weight:600;">Followers</div>
+      </div>
+      <div style="flex:1; min-width:180px; background:linear-gradient(90deg,#00c6ff,#0072ff);border-radius:12px;padding:18px 0;box-shadow:0 2px 8px rgba(0,198,255,0.12);">
+        <div style="font-size:2.2rem;font-weight:700;">₹<span id="dashboardBalance">0.00</span></div>
+        <div style="color:#fff;font-weight:600;">Current Balance</div>
+      </div>
+    </div>
+
+    <!-- Add Income Section -->
+    <div style="background:#e6fff7;padding:14px 18px;border-radius:10px;margin-bottom:18px;box-shadow:0 2px 8px rgba(0,198,255,0.07);text-align:left;">
+      <label for="incomeAmount"><strong>Add Income:</strong></label>
+      <input type="number" id="incomeAmount" placeholder="Amount" min="1" style="width:120px;margin-right:10px;" />
+      <input type="number" id="incomeUserId" placeholder="User ID" style="width:90px;margin-right:10px;" />
+      <button onclick="addIncome()" style="background:#00c6ff;">Add Money</button>
+      <span id="incomeStatus" style="margin-left:10px;color:#0072ff;font-weight:600;"></span>
+    </div>
 
     <h3>Add Expense</h3>
     <input type="number" id="user_id" placeholder="User ID" />
@@ -205,7 +238,12 @@
 
     <div class="expense-list" id="expenseList"></div>
     <div class="total-expense" id="totalExpense"></div>
-    <canvas id="expenseChart" width="400" height="250"></canvas>
+
+    <!-- Chart Widget -->
+    <div style="background:#f7fafd;padding:18px 20px;border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,0.06);margin:24px 0;">
+      <canvas id="expenseChart" width="400" height="250"></canvas>
+    </div>
+
     <div class="ai-suggestion" id="aiSuggestion"></div>
 
     <h3>Ask the AI Agent</h3>
@@ -287,6 +325,13 @@
       try {
         const res = await fetch(`/get_expenses/${userId}`);
         const data = await res.json();
+
+        // Update dashboard summary cards
+        document.getElementById("dashboardTotal").innerText = data.total_expense ? data.total_expense.toFixed(2) : "0.00";
+        document.getElementById("dashboardRevenue").innerText = data.total_expense ? (data.total_expense * 1.2).toFixed(2) : "0.00";
+        document.getElementById("dashboardIssues").innerText = data.expenses ? data.expenses.length : "0";
+        document.getElementById("dashboardFollowers").innerText = data.expenses ? (data.expenses.length * 3) : "0";
+        fetchBalance(userId);
 
         if (!data.expenses || data.expenses.length === 0) {
           expenseList.innerHTML = "<p>No expenses found for this user.</p>";
@@ -486,5 +531,61 @@
         resultBox.innerHTML = "Failed to get forecast.";
       }
     }
+
+    async function fetchBalance(userId) {
+      if (!userId) return;
+      try {
+        const res = await fetch(`/get_balance/${userId}`);
+        const data = await res.json();
+        document.getElementById("dashboardBalance").innerText = data.balance !== undefined ? Number(data.balance).toFixed(2) : "0.00";
+      } catch (err) {
+        document.getElementById("dashboardBalance").innerText = "0.00";
+      }
+    }
+
+    async function addIncome() {
+      const userId = document.getElementById("incomeUserId").value;
+      const amount = parseFloat(document.getElementById("incomeAmount").value);
+      const status = document.getElementById("incomeStatus");
+      if (!userId || isNaN(amount) || amount <= 0) {
+        status.innerText = "Enter valid user ID and amount!";
+        status.style.color = "red";
+        return;
+      }
+      status.innerText = "Adding...";
+      status.style.color = "#0072ff";
+      try {
+        const res = await fetch("/add_income", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id: userId, amount })
+        });
+        const data = await res.json();
+        if (data.error) {
+          status.innerText = data.error;
+          status.style.color = "red";
+        } else {
+          status.innerText = "Money added!";
+          status.style.color = "#0072ff";
+          document.getElementById("incomeAmount").value = "";
+          fetchBalance(userId);
+        }
+      } catch (err) {
+        status.innerText = "Error adding money!";
+        status.style.color = "red";
+      }
+    }
+
+    window.onload = function() {
+      createFloatingSymbols();
+      // Optionally, auto-load dashboard for a default user (e.g., user_id=1)
+      // document.getElementById("fetch_user_id").value = 1;
+      // getExpenses();
+      // showChart();
+      // getAISuggestion();
+      // fetchBalance(1);
+    };
   </script>
+</body>
+</html>
 

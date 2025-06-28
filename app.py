@@ -21,6 +21,24 @@ def create_db_connection():
         print(f"Error connecting to database: {err}")
         return None
 
+# Initialize the database and create tables if they don't exist
+def init_db():
+    db = create_db_connection()
+    if db:
+        cursor = db.cursor()
+        # Create user_balance table if not exists
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS user_balance (
+                user_id INTEGER PRIMARY KEY,
+                balance REAL DEFAULT 0
+            )
+        """)
+        db.commit()
+        cursor.close()
+        db.close()
+
+init_db()
+
 # Function to generate AI suggestion
 def generate_ai_suggestion(user_id):
     db = create_db_connection()
@@ -32,6 +50,10 @@ def generate_ai_suggestion(user_id):
         cursor.execute("SELECT category, amount, description FROM expenses WHERE user_id = ?", (user_id,))
         rows = cursor.fetchall()
 
+        cursor.execute("SELECT balance FROM user_balance WHERE user_id = ?", (user_id,))
+        row = cursor.fetchone()
+        balance = row[0] if row else 0
+
         if not rows:
             return "No expenses to analyze."
 
@@ -41,6 +63,7 @@ def generate_ai_suggestion(user_id):
 
         prompt = f"""Here are the weekly expenses of a user:
 {expense_summary}
+The user's current balance is ₹{balance}.
 Give a short financial suggestion to the user in bullet points:
 - Is spending okay?
 - Should they save more?
@@ -93,6 +116,9 @@ def add_expense():
         """
         values = (data['user_id'], data['category'], data['amount'], data['description'], data['expense_date'])
         cursor.execute(query, values)
+        # Subtract from balance
+        cursor.execute("INSERT INTO user_balance (user_id, balance) VALUES (?, 0) ON CONFLICT(user_id) DO NOTHING", (data['user_id'],))
+        cursor.execute("UPDATE user_balance SET balance = balance - ? WHERE user_id = ?", (data['amount'], data['user_id']))
         db.commit()
         return jsonify({"message": "Expense added successfully!"})
 
@@ -100,6 +126,29 @@ def add_expense():
         print(f"Error adding expense: {err}")
         return jsonify({"error": "Failed to add expense"}), 500
 
+    finally:
+        cursor.close()
+        db.close()
+
+# API to add income (increase balance)
+@app.route('/add_income', methods=['POST'])
+def add_income():
+    data = request.json
+    user_id = data.get('user_id')
+    amount = float(data.get('amount', 0))
+    if not user_id or amount <= 0:
+        return jsonify({"error": "Invalid input"}), 400
+    db = create_db_connection()
+    if not db:
+        return jsonify({"error": "Database connection failed"}), 500
+    cursor = db.cursor()
+    try:
+        cursor.execute("INSERT INTO user_balance (user_id, balance) VALUES (?, ?) ON CONFLICT(user_id) DO UPDATE SET balance = balance + ?",
+                       (user_id, amount, amount))
+        db.commit()
+        cursor.execute("SELECT balance FROM user_balance WHERE user_id = ?", (user_id,))
+        balance = cursor.fetchone()[0]
+        return jsonify({"message": "Income added!", "balance": balance})
     finally:
         cursor.close()
         db.close()
@@ -129,6 +178,22 @@ def get_expenses(user_id):
         print(f"Error fetching expenses: {err}")
         return jsonify({"error": "Failed to fetch expenses"}), 500
 
+    finally:
+        cursor.close()
+        db.close()
+
+# API to get user balance
+@app.route('/get_balance/<int:user_id>', methods=['GET'])
+def get_balance(user_id):
+    db = create_db_connection()
+    if not db:
+        return jsonify({"error": "Database connection failed"}), 500
+    cursor = db.cursor()
+    try:
+        cursor.execute("SELECT balance FROM user_balance WHERE user_id = ?", (user_id,))
+        row = cursor.fetchone()
+        balance = row[0] if row else 0
+        return jsonify({"balance": balance})
     finally:
         cursor.close()
         db.close()
@@ -203,6 +268,9 @@ def query_agent():
     try:
         cursor.execute("SELECT category, amount, description, expense_date FROM expenses WHERE user_id = ?", (user_id,))
         rows = cursor.fetchall()
+        cursor.execute("SELECT balance FROM user_balance WHERE user_id = ?", (user_id,))
+        row = cursor.fetchone()
+        balance = row[0] if row else 0
         if not rows:
             return jsonify({"answer": "No expenses found for the user."})
 
@@ -227,13 +295,15 @@ def query_agent():
                 ml_response = client.get(ml_url)
                 ml_json = ml_response.get_json()
                 prediction_text = f"Prediction: {ml_json.get('message', '')} {ml_json.get('predictions', '')}"
-            prompt = f"""User asked: '{user_query}'\nThe forecast for the next period is: {ml_json.get('predictions', '')}.\nPlease explain what this means in simple terms, without inventing or recalculating any numbers. Do not provide any new numbers or daily breakdowns."""
+            prompt = f"""User asked: '{user_query}'\nThe forecast for the next period is: {ml_json.get('predictions', '')}.\nThe user's current balance is ₹{balance}.\nPlease explain what this means in simple terms, without inventing or recalculating any numbers. Do not provide any new numbers or daily breakdowns."""
         else:
             data_str = "\n".join([f"{r[0]},{r[1]},{r[2]},{r[3]}" for r in rows])
             prompt = f"""
 You are an AI financial assistant. A user has the following expense records:
 category, amount, description, date
 {data_str}
+
+The user's current balance is ₹{balance}.
 
 Answer this question based on the data above:
 '{user_query}'
