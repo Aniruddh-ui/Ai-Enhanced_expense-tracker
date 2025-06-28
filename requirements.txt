@@ -3,5 +3,7 @@ mysql-connector-python
 gunicorn
 requests
 python-dotenv
-
+pandas
+numpy
+scikit-learn
 
