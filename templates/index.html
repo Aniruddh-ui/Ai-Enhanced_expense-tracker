@@ -42,14 +42,17 @@
     }
 
     .container {
-      max-width: 500px;
-      background: rgba(255, 255, 255, 0.95);
-      padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-      margin: 50px auto;
+      max-width: 1200px;
+      background: rgba(255, 255, 255, 0.97);
+      padding: 40px 40px 30px 40px;
+      border-radius: 18px;
+      box-shadow: 0 6px 32px rgba(0, 0, 0, 0.10);
+      margin: 40px auto;
       position: relative;
       z-index: 1;
+      display: flex;
+      flex-direction: row;
+      gap: 0;
     }
 
     h1 {
@@ -177,51 +180,118 @@
       max-width: 100%;
     }
 
-    @media (max-width: 500px) {
-      .container {
-        padding: 15px;
-        margin: 20px 10px;
+    .dashboard-wrapper {
+      display: flex;
+      flex-direction: row;
+      gap: 0;
+      min-height: 650px;
+      width: 100%;
+    }
+    .sidebar {
+      width: 240px;
+      background: linear-gradient(180deg,#f7fafd,#e6fff7);
+      border-radius: 18px 0 0 18px;
+      box-shadow: 2px 0 12px rgba(0,0,0,0.08);
+      padding: 40px 0;
+      min-height: 700px;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .sidebar .menu-title {
+      font-size: 1.25rem;
+      font-weight: bold;
+      margin-bottom: 36px;
+      text-align: center;
+      color: #007bff;
+    }
+    .sidebar .menu-item {
+      padding: 12px 32px;
+      cursor: pointer;
+      font-size: 1.08rem;
+      border-left: 4px solid transparent;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .sidebar .menu-item:hover {
+      background: #e3f0ff;
+      border-left: 4px solid #007bff;
+    }
+    .main-content {
+      flex: 1;
+      padding: 32px 32px 32px 32px;
+      background: transparent;
+      border-radius: 0 18px 18px 0;
+      min-width: 0;
+      min-height: 700px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    @media (max-width: 900px) {
+      .dashboard-wrapper {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+        border-radius: 16px 16px 0 0;
+        min-height: unset;
+        flex-direction: row;
+        justify-content: space-around;
+        padding: 16px 0;
+      }
+      .sidebar .menu-title {
+        display: none;
+      }
+      .sidebar .menu-item {
+        padding: 10px 10px;
+        font-size: 1rem;
+        border-left: none;
+        border-bottom: 2px solid transparent;
+      }
+      .sidebar .menu-item:hover {
+        border-left: none;
+        border-bottom: 2px solid #007bff;
+      }
+      .main-content {
+        border-radius: 0 0 16px 16px;
+        padding: 20px 8px;
       }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Expense Tracker Dashboard</h1>
-
-    <!-- Dashboard Summary Cards -->
-    <div style="display: flex; flex-direction: row; gap: 0;">
-      <!-- Sidebar -->
-      <div style="width: 170px; background: linear-gradient(180deg,#f7fafd,#e6fff7); border-radius: 12px 0 0 12px; box-shadow: 2px 0 8px rgba(0,0,0,0.06); padding: 24px 0; min-height: 600px; text-align: left;">
-        <div style="font-size: 1.2rem; font-weight: bold; margin-bottom: 30px; text-align: center; color: #007bff;">Menu</div>
-        <div style="padding: 10px 24px; cursor: pointer;" onclick="scrollToSection('dashboardSummary')">Dashboard</div>
-        <div style="padding: 10px 24px; cursor: pointer;" onclick="scrollToSection('addExpenseSection')">Add Expense</div>
-        <div style="padding: 10px 24px; cursor: pointer;" onclick="scrollToSection('addIncomeSection')">Add Income</div>
-        <div style="padding: 10px 24px; cursor: pointer;" onclick="scrollToSection('chartSection')">Show Chart</div>
-        <div style="padding: 10px 24px; cursor: pointer;" onclick="scrollToSection('aiAgentSection')">AI Agent</div>
-        <div style="padding: 10px 24px; cursor: pointer;" onclick="scrollToSection('financialAdvisorSection')">Financial Advisor</div>
-      </div>
-      <!-- Main Content -->
-      <div style="flex: 1; padding-left: 24px;">
-        <div id="dashboardSummary">
-          <div style="display: flex; flex-wrap: wrap; gap: 18px; justify-content: space-between; margin-bottom: 30px;">
-            <div style="flex:1; min-width:180px; background:linear-gradient(90deg,#ffb347,#ffcc33);border-radius:12px;padding:18px 0;box-shadow:0 2px 8px rgba(255,179,71,0.12);margin-right:8px;">
-              <div style="font-size:2.2rem;font-weight:700;">₹<span id="dashboardTotal">0.00</span></div>
-              <div style="color:#fff;font-weight:600;">Total Expenses</div>
-            </div>
-            <div style="flex:1; min-width:180px; background:linear-gradient(90deg,#43e97b,#38f9d7);border-radius:12px;padding:18px 0;box-shadow:0 2px 8px rgba(67,233,123,0.12);margin-right:8px;">
-              <div style="font-size:2.2rem;font-weight:700;">₹<span id="dashboardIncome">0.00</span></div>
-              <div style="color:#fff;font-weight:600;">Total Income</div>
-            </div>
-            <div style="flex:1; min-width:180px; background:linear-gradient(90deg,#00c6ff,#0072ff);border-radius:12px;padding:18px 0;box-shadow:0 2px 8px rgba(0,198,255,0.12);">
-              <div style="font-size:2.2rem;font-weight:700;">₹<span id="dashboardBalance">0.00</span></div>
-              <div style="color:#fff;font-weight:600;">Current Balance</div>
-            </div>
+    <div class="sidebar">
+      <div class="menu-title">Menu</div>
+      <div class="menu-item" onclick="scrollToSection('dashboardSummary')">Dashboard</div>
+      <div class="menu-item" onclick="scrollToSection('addExpenseSection')">Add Expense</div>
+      <div class="menu-item" onclick="scrollToSection('addIncomeSection')">Add Income</div>
+      <div class="menu-item" onclick="scrollToSection('chartSection')">Show Chart</div>
+      <div class="menu-item" onclick="scrollToSection('aiAgentSection')">AI Agent</div>
+      <div class="menu-item" onclick="scrollToSection('financialAdvisorSection')">Financial Advisor</div>
+    </div>
+    <div class="main-content">
+      <h1 style="margin-bottom: 18px;">Expense Tracker</h1>
+      <div id="dashboardSummary">
+        <div style="display: flex; flex-wrap: wrap; gap: 32px; justify-content: flex-start; margin-bottom: 36px;">
+          <div style="flex:1; min-width:260px; max-width:320px; background:linear-gradient(90deg,#ffb347,#ffcc33);border-radius:14px;padding:28px 0;box-shadow:0 2px 12px rgba(255,179,71,0.10);margin-right:8px;display:flex;flex-direction:column;align-items:center;">
+            <div style="font-size:2.4rem;font-weight:700;">₹<span id="dashboardTotal">0.00</span></div>
+            <div style="color:#fff;font-weight:600;">Total Expenses</div>
+          </div>
+          <div style="flex:1; min-width:260px; max-width:320px; background:linear-gradient(90deg,#43e97b,#38f9d7);border-radius:14px;padding:28px 0;box-shadow:0 2px 12px rgba(67,233,123,0.10);margin-right:8px;display:flex;flex-direction:column;align-items:center;">
+            <div style="font-size:2.4rem;font-weight:700;">₹<span id="dashboardIncome">0.00</span></div>
+            <div style="color:#fff;font-weight:600;">Total Income</div>
+          </div>
+          <div style="flex:1; min-width:260px; max-width:320px; background:linear-gradient(90deg,#00c6ff,#0072ff);border-radius:14px;padding:28px 0;box-shadow:0 2px 12px rgba(0,198,255,0.10);display:flex;flex-direction:column;align-items:center;">
+            <div style="font-size:2.4rem;font-weight:700;">₹<span id="dashboardBalance">0.00</span></div>
+            <div style="color:#fff;font-weight:600;">Current Balance</div>
           </div>
         </div>
+      </div>
         <div id="addIncomeSection">
-          <!-- Add Income Section (moved here) -->
-          <div style="background:#e6fff7;padding:14px 18px;border-radius:10px;margin-bottom:18px;box-shadow:0 2px 8px rgba(0,198,255,0.07);text-align:left;">
+          <div style="background:#e6fff7;padding:14px 18px;border-radius:10px;margin-bottom:18px;box-shadow:0 2px 8px rgba(0,198,255,0.07);text-align:left;max-width:420px;">
             <label for="incomeAmount"><strong>Add Income:</strong></label>
             <input type="number" id="incomeAmount" placeholder="Amount" min="1" style="width:120px;margin-right:10px;" />
             <input type="number" id="incomeUserId" placeholder="User ID" style="width:90px;margin-right:10px;" />
@@ -231,36 +301,40 @@
         </div>
         <div id="addExpenseSection">
           <h3>Add Expense</h3>
-          <input type="number" id="user_id" placeholder="User ID" />
-          <input type="text" id="category" placeholder="Category" />
-          <input type="number" id="amount" placeholder="Amount" step="0.01" />
-          <input type="text" id="description" placeholder="Description" />
-          <input type="date" id="expense_date" />
-          <button onclick="addExpense()">Add Expense</button>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;max-width:600px;">
+            <input type="number" id="user_id" placeholder="User ID" style="flex:1;min-width:90px;" />
+            <input type="text" id="category" placeholder="Category" style="flex:1;min-width:90px;" />
+            <input type="number" id="amount" placeholder="Amount" step="0.01" style="flex:1;min-width:90px;" />
+            <input type="text" id="description" placeholder="Description" style="flex:2;min-width:120px;" />
+            <input type="date" id="expense_date" style="flex:1;min-width:110px;" />
+            <button onclick="addExpense()" style="flex:1;min-width:120px;">Add Expense</button>
+          </div>
         </div>
         <div id="chartSection">
           <h3>Your Spending Overview</h3>
-          <input type="number" id="fetch_user_id" placeholder="Enter User ID" />
-          <button onclick="getExpenses()">Get Expenses</button>
-          <button onclick="getAISuggestion()">Get AI Suggestion</button>
-          <button onclick="showChart()">Show Chart</button>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;max-width:600px;margin-bottom:10px;">
+            <input type="number" id="fetch_user_id" placeholder="Enter User ID" style="flex:1;min-width:120px;" />
+            <button onclick="getExpenses()" style="flex:1;min-width:110px;">Get Expenses</button>
+            <!-- Removed Get AI Suggestion button as per user request -->
+            <button onclick="showChart()" style="flex:1;min-width:110px;">Show Chart</button>
+          </div>
           <div class="expense-list" id="expenseList"></div>
           <div class="total-expense" id="totalExpense"></div>
-          <!-- Chart Widget -->
           <div style="background:#f7fafd;padding:18px 20px;border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,0.06);margin:24px 0;">
             <canvas id="expenseChart" width="400" height="250"></canvas>
           </div>
         </div>
         <div id="aiAgentSection">
-          <div class="ai-suggestion" id="aiSuggestion"></div>
           <h3>Ask the AI Agent</h3>
-          <input type="text" id="agentQuery" placeholder="Ask a question about your expenses..." />
-          <button onclick="askAgent()">Ask Agent</button>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;max-width:600px;">
+            <input type="text" id="agentQuery" placeholder="Ask a question about your expenses..." style="flex:2;min-width:180px;" />
+            <button onclick="askAgent()" style="flex:1;min-width:110px;">Ask Agent</button>
+          </div>
           <div class="ai-suggestion" id="agentAnswer"></div>
         </div>
         <div id="forecastSection">
           <h3>Expense Forecast</h3>
-          <div style="background:#f5faff;padding:18px 20px;border-radius:10px;margin-bottom:18px;box-shadow:0 2px 8px rgba(0,0,0,0.07);text-align:left;">
+          <div style="background:#f5faff;padding:18px 20px;border-radius:10px;margin-bottom:18px;box-shadow:0 2px 8px rgba(0,0,0,0.07);text-align:left;max-width:500px;">
             <label for="forecastType"><strong>Forecast Type:</strong></label>
             <select id="forecastType" style="margin-bottom:10px;">
               <option value="weekly">Weekly</option>
@@ -280,61 +354,8 @@
         </div>
       </div>
     </div>
-
-    <!-- Add Income Section -->
-    <div style="background:#e6fff7;padding:14px 18px;border-radius:10px;margin-bottom:18px;box-shadow:0 2px 8px rgba(0,198,255,0.07);text-align:left;">
-      <label for="incomeAmount"><strong>Add Income:</strong></label>
-      <input type="number" id="incomeAmount" placeholder="Amount" min="1" style="width:120px;margin-right:10px;" />
-      <input type="number" id="incomeUserId" placeholder="User ID" style="width:90px;margin-right:10px;" />
-      <button onclick="addIncome()" style="background:#00c6ff;">Add Money</button>
-      <span id="incomeStatus" style="margin-left:10px;color:#0072ff;font-weight:600;"></span>
-    </div>
-
-    <h3>Add Expense</h3>
-    <input type="number" id="user_id" placeholder="User ID" />
-    <input type="text" id="category" placeholder="Category" />
-    <input type="number" id="amount" placeholder="Amount" step="0.01" />
-    <input type="text" id="description" placeholder="Description" />
-    <input type="date" id="expense_date" />
-    <button onclick="addExpense()">Add Expense</button>
-
-    <h3>Your Spending Overview</h3>
-    <input type="number" id="fetch_user_id" placeholder="Enter User ID" />
-    <button onclick="getExpenses()">Get Expenses</button>
-    <button onclick="getAISuggestion()">Get AI Suggestion</button>
-    <button onclick="showChart()">Show Chart</button>
-
-    <div class="expense-list" id="expenseList"></div>
-    <div class="total-expense" id="totalExpense"></div>
-
-    <!-- Chart Widget -->
-    <div style="background:#f7fafd;padding:18px 20px;border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,0.06);margin:24px 0;">
-      <canvas id="expenseChart" width="400" height="250"></canvas>
-    </div>
-
-    <div class="ai-suggestion" id="aiSuggestion"></div>
-
-    <h3>Ask the AI Agent</h3>
-    <input type="text" id="agentQuery" placeholder="Ask a question about your expenses..." />
-    <button onclick="askAgent()">Ask Agent</button>
-    <div class="ai-suggestion" id="agentAnswer"></div>
-
-    <h3>Expense Forecast</h3>
-    <div style="background:#f5faff;padding:18px 20px;border-radius:10px;margin-bottom:18px;box-shadow:0 2px 8px rgba(0,0,0,0.07);text-align:left;">
-      <label for="forecastType"><strong>Forecast Type:</strong></label>
-      <select id="forecastType" style="margin-bottom:10px;">
-        <option value="weekly">Weekly</option>
-        <option value="monthly">Monthly</option>
-      </select>
-      <input type="text" id="forecastCategory" placeholder="Category (optional)" style="margin-bottom:10px;" />
-      <input type="number" id="forecastPeriods" placeholder="Periods (e.g. 1, 2, 3)" min="1" value="1" style="margin-bottom:10px;" />
-      <button onclick="getForecast()" style="background:#28a745;">Get Forecast</button>
-      <div class="ai-suggestion" id="forecastResult" style="margin-top:15px;"></div>
-      <div style="font-size:13px;color:#888;margin-top:8px;">Example: "Forecast my food expenses for the next 2 weeks"</div>
-    </div>
   </div>
-
-    <script>
+  <script>
     function scrollToSection(sectionId) {
       const el = document.getElementById(sectionId);
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -461,36 +482,7 @@
       }
     }
 
-    async function getAISuggestion() {
-      const userId = document.getElementById("fetch_user_id").value;
-      const aiBox = document.getElementById("aiSuggestion");
-
-      if (!userId) {
-        alert("Please enter user ID first.");
-        return;
-      }
-
-      aiBox.innerHTML = "Generating AI suggestion...";
-
-      try {
-        const res = await fetch(`/ai_suggestion/${userId}`);
-        const data = await res.json();
-
-        const suggestion = data.ai_suggestion || "No suggestion available.";
-        const formatted = suggestion
-          .split('\n')
-          .map(line => `<li>${line.trim()}</li>`)
-          .join("");
-
-        aiBox.innerHTML = `
-          <strong>AI Suggestion:</strong>
-          <ul style="padding-left: 20px; margin: 0;">${formatted}</ul>
-        `;
-      } catch (err) {
-        console.error("AI Suggestion Error:", err);
-        aiBox.innerHTML = "Failed to generate suggestion.";
-      }
-    }
+    // Removed getAISuggestion function as per user request
 
     async function showChart() {
       const userId = document.getElementById("fetch_user_id").value;
