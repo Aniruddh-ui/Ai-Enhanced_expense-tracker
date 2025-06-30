@@ -259,6 +259,224 @@
         padding: 20px 8px;
       }
     }
+
+    @media (max-width: 600px) {
+      .container {
+        flex-direction: column;
+        padding: 0;
+        margin: 0;
+        min-width: 0;
+        box-shadow: none;
+        border-radius: 0;
+        width: 100vw;
+        max-width: 100vw;
+      }
+      .sidebar {
+        flex-direction: row;
+        width: 100vw;
+        min-width: 0;
+        min-height: unset;
+        border-radius: 0;
+        box-shadow: none;
+        padding: 0;
+        margin-bottom: 0;
+        overflow-x: auto;
+        justify-content: flex-start;
+        align-items: center;
+        gap: 0;
+      }
+      .sidebar .menu-item {
+        font-size: 0.95rem;
+        padding: 10px 10px;
+        min-width: 90px;
+        text-align: center;
+        white-space: nowrap;
+        border-bottom: 2px solid transparent;
+        border-left: none;
+      }
+      .main-content {
+        padding: 8px 2vw;
+        border-radius: 0;
+        min-width: 0;
+        gap: 14px;
+      }
+      h1 {
+        font-size: 1.2rem;
+        margin-bottom: 10px;
+        text-align: left;
+      }
+      h3 {
+        font-size: 1.05rem;
+        margin-top: 14px;
+        text-align: left;
+      }
+      .dashboard-wrapper,
+      #dashboardSummary > div {
+        flex-direction: column !important;
+        gap: 10px !important;
+        align-items: stretch !important;
+      }
+      #dashboardSummary > div > div {
+        min-width: 0 !important;
+        max-width: 100% !important;
+        margin-right: 0 !important;
+        margin-bottom: 10px !important;
+        width: 100% !important;
+        box-sizing: border-box;
+      }
+      #dashboardSummary > div > div > div:first-child {
+        font-size: 1.5rem !important;
+      }
+      .expense-table {
+        font-size: 13px;
+        width: 100%;
+        display: block;
+        overflow-x: auto;
+      }
+      .expense-table th, .expense-table td {
+        padding: 7px 4px;
+        font-size: 12px;
+        white-space: nowrap;
+      }
+      .expense-table th {
+        font-size: 13px;
+      }
+      .expense-table td button.delete-btn {
+        font-size: 12px;
+        padding: 4px 8px;
+      }
+      .ai-suggestion, .expense-list, .total-expense {
+        font-size: 13px;
+        padding: 8px 4px;
+      }
+      input, button, select {
+        font-size: 13px !important;
+        padding: 7px !important;
+        margin: 5px 0 !important;
+        border-radius: 5px !important;
+      }
+      #addIncomeSection, #addExpenseSection, #chartSection, #aiAgentSection, #forecastSection, #financialAdvisorSection {
+        max-width: 100% !important;
+        padding: 0 !important;
+      }
+      #addExpenseSection > div,
+      #chartSection > div,
+      #aiAgentSection > div,
+      #forecastSection > div {
+        flex-direction: column !important;
+        gap: 6px !important;
+        align-items: stretch !important;
+        min-width: 0 !important;
+      }
+      canvas {
+        width: 100% !important;
+        height: auto !important;
+        max-width: 100vw !important;
+      }
+    }
+
+    /* --- Enhanced mobile responsiveness --- */
+    @media (max-width: 600px) {
+      .container {
+        flex-direction: column;
+        padding: 8px 0 0 0;
+        margin: 0;
+        min-width: 0;
+        box-shadow: none;
+        border-radius: 0;
+      }
+      .sidebar {
+        flex-direction: row;
+        width: 100%;
+        min-width: 0;
+        min-height: unset;
+        border-radius: 0;
+        box-shadow: none;
+        padding: 8px 0;
+        margin-bottom: 0;
+      }
+      .sidebar .menu-item {
+        font-size: 0.95rem;
+        padding: 8px 4px;
+        min-width: 0;
+        text-align: center;
+      }
+      .main-content {
+        padding: 8px 2vw;
+        border-radius: 0;
+        min-width: 0;
+        gap: 18px;
+      }
+      h1 {
+        font-size: 1.3rem;
+        margin-bottom: 10px;
+      }
+      h3 {
+        font-size: 1.08rem;
+        margin-top: 18px;
+      }
+      .expense-table th, .expense-table td {
+        padding: 8px 6px;
+        font-size: 13px;
+      }
+      .expense-table th {
+        font-size: 14px;
+      }
+      .expense-table td button.delete-btn {
+        font-size: 13px;
+        padding: 4px 10px;
+      }
+      .dashboard-wrapper > div {
+        min-width: 0 !important;
+        max-width: 100% !important;
+        margin-right: 0 !important;
+        margin-bottom: 10px !important;
+      }
+      #dashboardSummary > div {
+        flex-direction: column !important;
+        gap: 10px !important;
+      }
+      .ai-suggestion, .expense-list, .total-expense {
+        font-size: 14px;
+        padding: 10px 8px;
+      }
+      .expense-table {
+        font-size: 13px;
+      }
+      .expense-table th, .expense-table td {
+        padding: 7px 4px;
+      }
+      input, button, select {
+        font-size: 14px !important;
+        padding: 8px !important;
+        margin: 6px 0 !important;
+        border-radius: 6px !important;
+      }
+      #addIncomeSection, #addExpenseSection, #chartSection, #aiAgentSection, #forecastSection, #financialAdvisorSection {
+        max-width: 100% !important;
+        padding: 0 !important;
+      }
+      #addExpenseSection > div,
+      #chartSection > div,
+      #aiAgentSection > div,
+      #forecastSection > div {
+        flex-direction: column !important;
+        gap: 6px !important;
+        align-items: stretch !important;
+        min-width: 0 !important;
+      }
+      .expense-table th, .expense-table td {
+        white-space: normal;
+        word-break: break-word;
+      }
+      canvas {
+        width: 100% !important;
+        height: auto !important;
+        max-width: 100vw !important;
+      }
+    }
+
+    /* --- End enhanced mobile responsiveness --- */
   </style>
 </head>
 <body>
