@@ -7,8 +7,7 @@ A modern, full-stack expense tracker web app built with Flask, SQLite, and Chart
 ## 🌐 Live Demo
 > **This app is deployed on [Render](https://render.com/).**
 > 
-> Visit: [https://your-app-url.onrender.com](https://your-app-url.onrender.com)
-
+> Visit: https://expense-tracker-vzs0.onrender.com
 ---
 
 ## 🚀 Features
