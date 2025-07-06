@@ -2,8 +2,6 @@
 
 A modern, full-stack expense tracker web app built with Flask, SQLite, and Chart.js, featuring an AI-powered financial assistant using Llama 3 (via OpenRouter). Easily add, view, and delete expenses, visualize your spending, and ask natural language questions about your finances.
 
-[![Deploy on Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/)
-
 ## 🌐 Live Demo
 > **This app is deployed on [Render](https://render.com/).**
 > 
